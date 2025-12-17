@@ -161,24 +161,22 @@ async function handleLogin(e) {
     }
 }
 
-async function logout() {
-    try {
-        // Clear Supabase session
-        await supabaseClient.auth.signOut();
+function logout() {
+    // Clear ALL Supabase keys from localStorage (403 error bypass)
+    Object.keys(localStorage).forEach(key => {
+        if (key.includes('supabase') || key.startsWith('sb-')) {
+            localStorage.removeItem(key);
+        }
+    });
 
-        // Clear client-side user
-        currentUser = null;
+    // Clear client-side user
+    currentUser = null;
 
-        // Clear singleton to force fresh session check
-        window.supabaseClient = null;
+    // Clear singleton
+    window.supabaseClient = null;
 
-        // Redirect with cache-busting
-        window.location.href = 'login.html?logout=1';
-    } catch (err) {
-        console.error('Logout error:', err);
-        // Force redirect anyway
-        window.location.href = 'login.html';
-    }
+    // Force redirect
+    window.location.replace('login.html');
 }
 
 // --- Shared Functions ---
