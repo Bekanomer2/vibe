@@ -107,6 +107,7 @@ async function initAuth() {
     // Hide loader if logic reaches here (no redirect)
     const loader = document.getElementById('pageLoader');
     if (loader) loader.classList.add('hidden');
+    document.body.classList.remove('auth-loading');
 }
 
 initAuth();

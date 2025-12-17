@@ -663,3 +663,13 @@ footer {
         opacity: 1;
     }
 }
+
+/* Auth Loading State - Hides everything except loader */
+body.auth-loading>*:not(.loader-overlay) {
+    display: none !important;
+}
+
+body.auth-loading {
+    overflow: hidden;
+    /* Prevent scrolling */
+}
