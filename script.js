@@ -170,7 +170,7 @@ function loadCart() {
     if (!currentUser) return;
     const key = `cart_${currentUser.id}`;
     cart = JSON.parse(localStorage.getItem(key)) || [];
-    updateCartCount();
+    updateCartIcon();
     // Re-render cart if on cart page
     if (window.location.pathname.includes('cart.html')) {
         renderCart();
@@ -181,7 +181,7 @@ function saveCart() {
     if (!currentUser) return;
     const key = `cart_${currentUser.id}`;
     localStorage.setItem(key, JSON.stringify(cart));
-    updateCartCount();
+    updateCartIcon();
     // Update cart page if open
     if (document.getElementById('items')) renderCart();
 }
