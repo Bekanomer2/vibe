@@ -56,26 +56,44 @@ const productsData = [
     { id: 40, name: 'Honor X8', price: 18000, img: 'img/honor x8.jpg', brand: 'Honor', ram: 6, storage: 128, color: 'Ocean Blue', display: '6.7"', battery: 4000 }
 ];
 
-const API_URL = 'http://localhost:3000/api';
+
+// Supabase Configuration
+const SUPABASE_URL = 'https://vsxvbrjfuhzvdyzbpjmn.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_aGa3JAz9zF_lQA2swDU43A_UA4fKskN';
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // --- Auth System ---
-let currentUser = JSON.parse(localStorage.getItem('currentUser'));
+let currentUser = null;
 
-// Protect pages
-const path = window.location.pathname;
-const isLoginPage = path.includes('login.html');
-if (!currentUser && !isLoginPage) {
-    window.location.href = 'login.html';
-}
-if (currentUser && isLoginPage) {
-    window.location.href = 'index.html';
+// Initialize auth state
+async function initAuth() {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session) {
+        currentUser = {
+            id: session.user.id,
+            username: session.user.user_metadata.username || session.user.email.split('@')[0],
+            email: session.user.email
+        };
+    }
+
+    // Protect pages
+    const path = window.location.pathname;
+    const isLoginPage = path.includes('login.html');
+    if (!currentUser && !isLoginPage) {
+        window.location.href = 'login.html';
+    }
+    if (currentUser && isLoginPage) {
+        window.location.href = 'index.html';
+    }
+
+    // Display Username
+    const usernameEl = document.getElementById('usernameDisplay');
+    if (usernameEl && currentUser) {
+        usernameEl.textContent = currentUser.username;
+    }
 }
 
-// Display Username
-const usernameEl = document.getElementById('usernameDisplay');
-if (usernameEl && currentUser) {
-    usernameEl.textContent = currentUser.username;
-}
+initAuth();
 
 let cart = JSON.parse(localStorage.getItem('cart')) || [];
 
@@ -87,18 +105,22 @@ async function handleRegister(e) {
     const password = document.getElementById('regPass').value;
 
     try {
-        const res = await fetch(`${API_URL}/register`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, email, password })
+        const { data, error } = await supabase.auth.signUp({
+            email: email,
+            password: password,
+            options: {
+                data: {
+                    username: username
+                }
+            }
         });
-        const data = await res.json();
 
-        if (!res.ok) throw new Error(data.error);
+        if (error) throw error;
 
-        currentUser = { id: data.id, username: data.username, email: data.email };
-        localStorage.setItem('currentUser', JSON.stringify(currentUser));
-        window.location.href = 'index.html';
+        showToast('Регистрация успешна! Войдите.', 'success');
+        setTimeout(() => {
+            document.querySelectorAll('.auth-tab')[0].click(); // Switch to login tab
+        }, 1500);
     } catch (err) {
         showToast(err.message, 'error');
     }
@@ -110,17 +132,18 @@ async function handleLogin(e) {
     const password = document.getElementById('loginPass').value.trim();
 
     try {
-        const res = await fetch(`${API_URL}/login`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ login, password })
+        const { data, error } = await supabase.auth.signInWithPassword({
+            email: login,
+            password: password
         });
-        const data = await res.json();
 
-        if (!res.ok) throw new Error(data.error);
+        if (error) throw error;
 
-        currentUser = data;
-        localStorage.setItem('currentUser', JSON.stringify(currentUser));
+        currentUser = {
+            id: data.user.id,
+            username: data.user.user_metadata.username || data.user.email.split('@')[0],
+            email: data.user.email
+        };
         window.location.href = 'index.html';
     } catch (err) {
         showToast(err.message, 'error');
@@ -128,7 +151,8 @@ async function handleLogin(e) {
 }
 
 function logout() {
-    localStorage.removeItem('currentUser');
+    supabase.auth.signOut();
+    currentUser = null;
     window.location.href = 'login.html';
 }
 
@@ -344,13 +368,32 @@ if (cartItemsEl) {
             };
 
             try {
-                const res = await fetch(`${API_URL}/orders`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(order)
-                });
+                // 1. Get max user_order_id for this user
+                const { data: maxData } = await supabase
+                    .from('orders')
+                    .select('user_order_id')
+                    .eq('user_id', currentUser.id)
+                    .order('user_order_id', { ascending: false })
+                    .limit(1);
 
-                if (!res.ok) throw new Error('Ошибка при создании заказа');
+                const nextId = (maxData && maxData.length > 0) ? maxData[0].user_order_id + 1 : 1;
+
+                // 2. Insert order
+                const { error } = await supabase
+                    .from('orders')
+                    .insert({
+                        user_id: currentUser.id,
+                        user_order_id: nextId,
+                        date: new Date().toISOString(),
+                        total: cart.reduce((s, i) => s + i.price * i.qty, 0),
+                        items: cart,
+                        status: 'В обработке',
+                        customer_name: name,
+                        customer_phone: phone,
+                        customer_address: address
+                    });
+
+                if (error) throw error;
 
                 showToast('Заказ оформлен! Спасибо за покупку.', 'success');
                 localStorage.removeItem('cart');
@@ -371,8 +414,13 @@ if (ordersListEl) {
         if (!currentUser) return;
 
         try {
-            const res = await fetch(`${API_URL}/orders?userId=${currentUser.id}`);
-            const orders = await res.json();
+            const { data: orders, error } = await supabase
+                .from('orders')
+                .select('*')
+                .eq('user_id', currentUser.id)
+                .order('id', { ascending: false });
+
+            if (error) throw error;
 
             if (orders.length === 0) {
                 ordersListEl.innerHTML = '<p style="text-align:center; color: var(--muted); padding: 40px;">История заказов пуста</p>';
