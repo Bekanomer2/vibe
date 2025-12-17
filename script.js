@@ -57,17 +57,23 @@ const productsData = [
 ];
 
 
+
+
 // Supabase Configuration
 const SUPABASE_URL = 'https://vsxvbrjfuhzvdyzbpjmn.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_aGa3JAz9zF_lQA2swDU43A_UA4fKskN';
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+let supabaseClient;
+if (!window.supabaseClient) {
+    window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+}
+supabaseClient = window.supabaseClient;
 
 // --- Auth System ---
 let currentUser = null;
 
 // Initialize auth state
 async function initAuth() {
-    const { data: { session } } = await supabase.auth.getSession();
+    const { data: { session } } = await supabaseClient.auth.getSession();
     if (session) {
         currentUser = {
             id: session.user.id,
@@ -91,6 +97,11 @@ async function initAuth() {
     if (usernameEl && currentUser) {
         usernameEl.textContent = currentUser.username;
     }
+
+    // Load orders if on orders page
+    if (loadOrdersFunc) {
+        loadOrdersFunc();
+    }
 }
 
 initAuth();
@@ -105,7 +116,7 @@ async function handleRegister(e) {
     const password = document.getElementById('regPass').value;
 
     try {
-        const { data, error } = await supabase.auth.signUp({
+        const { data, error } = await supabaseClient.auth.signUp({
             email: email,
             password: password,
             options: {
@@ -132,7 +143,7 @@ async function handleLogin(e) {
     const password = document.getElementById('loginPass').value.trim();
 
     try {
-        const { data, error } = await supabase.auth.signInWithPassword({
+        const { data, error } = await supabaseClient.auth.signInWithPassword({
             email: login,
             password: password
         });
@@ -151,7 +162,7 @@ async function handleLogin(e) {
 }
 
 function logout() {
-    supabase.auth.signOut();
+    supabaseClient.auth.signOut();
     currentUser = null;
     window.location.href = 'login.html';
 }
@@ -369,7 +380,7 @@ if (cartItemsEl) {
 
             try {
                 // 1. Get max user_order_id for this user
-                const { data: maxData } = await supabase
+                const { data: maxData } = await supabaseClient
                     .from('orders')
                     .select('user_order_id')
                     .eq('user_id', currentUser.id)
@@ -379,7 +390,7 @@ if (cartItemsEl) {
                 const nextId = (maxData && maxData.length > 0) ? maxData[0].user_order_id + 1 : 1;
 
                 // 2. Insert order
-                const { error } = await supabase
+                const { error } = await supabaseClient
                     .from('orders')
                     .insert({
                         user_id: currentUser.id,
@@ -409,12 +420,17 @@ if (cartItemsEl) {
 
 // --- Orders Page Logic ---
 const ordersListEl = document.getElementById('ordersList');
+let loadOrdersFunc = null;
+
 if (ordersListEl) {
-    async function loadOrders() {
-        if (!currentUser) return;
+    loadOrdersFunc = async function () {
+        if (!currentUser) {
+            console.log('currentUser is null, cannot load orders');
+            return;
+        }
 
         try {
-            const { data: orders, error } = await supabase
+            const { data: orders, error } = await supabaseClient
                 .from('orders')
                 .select('*')
                 .eq('user_id', currentUser.id)
@@ -463,8 +479,7 @@ if (ordersListEl) {
             console.error(err);
             ordersListEl.innerHTML = '<p style="text-align:center; color: #ef4444; padding: 40px;">Ошибка загрузки заказов</p>';
         }
-    }
-    loadOrders();
+    };
 }
 
 // --- Page Transition Logic ---
