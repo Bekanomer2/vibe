@@ -548,13 +548,26 @@ footer {
     /* Above cart button */
     background: #1e293b;
     color: var(--text);
-    padding: 14px 18px;
+    padding: 12px 20px;
     border-radius: 999px;
     font-weight: 800;
     text-decoration: none;
     border: 1px solid var(--accent);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     z-index: 100;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: transform 0.2s;
+}
+
+.orders-btn:hover,
+.cart-btn:hover {
+    transform: scale(1.05);
+}
+
+.btn-text {
+    font-size: 14px;
 }
 
 /* Orders List */
