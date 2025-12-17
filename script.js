@@ -153,6 +153,9 @@ async function initAuth() {
         loadOrdersFunc();
     }
 
+    // LOAD USER SPECIFIC CART
+    loadCart();
+
     // Reveal content
     const loader = document.getElementById('pageLoader');
     if (loader) loader.classList.add('hidden');
@@ -161,12 +164,31 @@ async function initAuth() {
 
 initAuth();
 
-let cart = JSON.parse(localStorage.getItem('cart')) || [];
+let cart = [];
+
+function loadCart() {
+    if (!currentUser) return;
+    const key = `cart_${currentUser.id}`;
+    cart = JSON.parse(localStorage.getItem(key)) || [];
+    updateCartCount();
+    // Re-render cart if on cart page
+    if (window.location.pathname.includes('cart.html')) {
+        renderCart();
+    }
+}
+
+function saveCart() {
+    if (!currentUser) return;
+    const key = `cart_${currentUser.id}`;
+    localStorage.setItem(key, JSON.stringify(cart));
+    updateCartCount();
+    // Update cart page if open
+    if (document.getElementById('items')) renderCart();
+}
 
 // Auth Functions
 async function handleRegister(e) {
     e.preventDefault();
-    const username = document.getElementById('regName').value;
     const email = document.getElementById('regEmail').value;
     const password = document.getElementById('regPass').value;
 
@@ -235,12 +257,6 @@ function logout() {
 }
 
 // --- Shared Functions ---
-
-function saveCart() {
-    localStorage.setItem('cart', JSON.stringify(cart));
-    updateCartIcon();
-    if (document.getElementById('items')) renderCart(); // Update cart page if open
-}
 
 function updateCartIcon() {
     const countEl = document.getElementById('cartCount');
