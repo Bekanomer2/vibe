@@ -71,6 +71,8 @@ supabaseClient = window.supabaseClient;
 // --- Auth System ---
 let currentUser = null;
 
+
+
 // Initialize auth state
 async function initAuth() {
     const { data: { session } } = await supabaseClient.auth.getSession();
@@ -417,6 +419,8 @@ if (cartItemsEl) {
                     });
 
                 if (error) throw error;
+
+
 
                 showToast('Заказ оформлен! Спасибо за покупку.', 'success');
                 localStorage.removeItem('cart');
