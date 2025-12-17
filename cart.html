@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Корзина</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <div class="loader-overlay" id="pageLoader">
+    <img src="img/logo.png" alt="Loading..." class="loader-logo">
+  </div>
+  <header>🛒 Ваша корзина</header>
+  <div class="container">
+    <a href="index.html">← Назад</a>
+    <div id="items"></div>
+    <div class="total" id="total"></div>
+    <button id="checkout"
+      style="margin-top:20px;background:#38bdf8;border:none;padding:14px 20px;font-weight:800;border-radius:12px">Оформить
+      заказ</button>
+    <div id="order" style="display:none;margin-top:20px">
+      <h3>Оформление заказа</h3>
+      <input id="name" placeholder="Имя" style="width:100%;padding:10px;margin:6px 0">
+      <input id="phone" placeholder="Телефон" style="width:100%;padding:10px;margin:6px 0">
+      <input id="address" placeholder="Адрес" style="width:100%;padding:10px;margin:6px 0">
+      <button id="send"
+        style="margin-top:10px;background:#38bdf8;border:none;padding:12px;font-weight:800">Подтвердить</button>
+    </div>
+  </div>
+  <div class="toast-container" id="toastContainer"></div>
+  <script src="script.js"></script>
+</body>
+
+</html>

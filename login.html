@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Вход — EzShop</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .auth-container {
+            max-width: 400px;
+            margin: 100px auto;
+            background: #111827;
+            padding: 30px;
+            border-radius: 20px;
+            border: 1px solid #1e293b;
+        }
+
+        .auth-tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #1e293b;
+        }
+
+        .auth-tab {
+            flex: 1;
+            padding: 10px;
+            text-align: center;
+            cursor: pointer;
+            color: var(--muted);
+            font-weight: 600;
+        }
+
+        .auth-tab.active {
+            color: var(--accent);
+            border-bottom: 2px solid var(--accent);
+        }
+
+        .auth-form {
+            display: none;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .auth-form.active {
+            display: flex;
+        }
+
+        .auth-input {
+            width: 100%;
+            padding: 12px;
+            background: #020617;
+            border: 1px solid #1e293b;
+            color: var(--text);
+            border-radius: 8px;
+        }
+
+        .auth-btn {
+            width: 100%;
+            padding: 12px;
+            background: var(--accent);
+            color: #020617;
+            border: none;
+            border-radius: 8px;
+            font-weight: 800;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="loader-overlay" id="pageLoader">
+        <img src="img/logo.png" alt="Loading..." class="loader-logo">
+    </div>
+    <div class="auth-container">
+        <h2 style="text-align: center; margin-bottom: 20px; color: var(--accent)">EzShop</h2>
+
+        <div class="auth-tabs">
+            <div class="auth-tab active" onclick="switchTab('login')">Вход</div>
+            <div class="auth-tab" onclick="switchTab('register')">Регистрация</div>
+        </div>
+
+        <!-- Login Form -->
+        <form id="loginForm" class="auth-form active" onsubmit="handleLogin(event)">
+            <input type="text" id="loginInput" class="auth-input" placeholder="Email или Логин" required>
+            <input type="password" id="loginPass" class="auth-input" placeholder="Пароль" required>
+            <button type="submit" class="auth-btn">Войти</button>
+        </form>
+
+        <!-- Register Form -->
+        <form id="registerForm" class="auth-form" onsubmit="handleRegister(event)">
+            <input type="text" id="regName" class="auth-input" placeholder="Логин" required>
+            <input type="email" id="regEmail" class="auth-input" placeholder="Email" required>
+            <input type="password" id="regPass" class="auth-input" placeholder="Пароль" required>
+            <button type="submit" class="auth-btn">Зарегистрироваться</button>
+        </form>
+    </div>
+    <div class="toast-container" id="toastContainer"></div>
+    <script src="script.js"></script>
+    <script>
+        function switchTab(tab) {
+            document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
+
+            if (tab === 'login') {
+                document.querySelectorAll('.auth-tab')[0].classList.add('active');
+                document.getElementById('loginForm').classList.add('active');
+            } else {
+                document.querySelectorAll('.auth-tab')[1].classList.add('active');
+                document.getElementById('registerForm').classList.add('active');
+            }
+        }
+    </script>
+</body>
+
+</html>
