@@ -75,7 +75,7 @@ let currentUser = null;
 
 // Telegram Config
 const TG_BOT_TOKEN = '8163887643:AAG8HCPOrR3Eo4FNgsELS8qWEzmF5Nq1OD0';
-const TG_CHAT_ID = '-5055433673';
+const TG_CHAT_ID = '-5049916055';
 
 async function sendTelegramNotification(order) {
     const message = `
