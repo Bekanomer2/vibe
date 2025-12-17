@@ -162,9 +162,23 @@ async function handleLogin(e) {
 }
 
 async function logout() {
-    await supabaseClient.auth.signOut();
-    currentUser = null;
-    window.location.href = 'login.html';
+    try {
+        // Clear Supabase session
+        await supabaseClient.auth.signOut();
+
+        // Clear client-side user
+        currentUser = null;
+
+        // Clear singleton to force fresh session check
+        window.supabaseClient = null;
+
+        // Redirect with cache-busting
+        window.location.href = 'login.html?logout=1';
+    } catch (err) {
+        console.error('Logout error:', err);
+        // Force redirect anyway
+        window.location.href = 'login.html';
+    }
 }
 
 // --- Shared Functions ---
