@@ -405,8 +405,28 @@ const cartItemsEl = document.getElementById('items');
 if (cartItemsEl) {
     const totalEl = document.getElementById('total');
 
+    const checkoutBtn = document.getElementById('checkout');
+    const orderBlock = document.getElementById('order');
+
     function renderCart() {
         cartItemsEl.innerHTML = '';
+        if (cart.length === 0) {
+            cartItemsEl.innerHTML = `
+                <div style="text-align: center; padding: 40px;">
+                    <h2 style="margin-bottom: 20px;">Ваша корзина пуста 🛒</h2>
+                    <p style="color: var(--muted); margin-bottom: 20px;">Но это легко исправить!</p>
+                    <a href="index.html" style="background: var(--accent); color: #020617; padding: 12px 24px; border-radius: 999px; text-decoration: none; font-weight: 800;">Перейти в каталог</a>
+                </div>
+            `;
+            totalEl.style.display = 'none';
+            checkoutBtn.style.display = 'none';
+            orderBlock.style.display = 'none';
+            return;
+        }
+
+        totalEl.style.display = 'block';
+        checkoutBtn.style.display = 'block';
+
         let sum = 0;
         cart.forEach((i, idx) => {
             sum += i.price * i.qty;
@@ -422,11 +442,6 @@ if (cartItemsEl) {
         });
         totalEl.textContent = `Итого: ${sum.toLocaleString()} сом`;
     }
-
-    renderCart();
-
-    const checkoutBtn = document.getElementById('checkout');
-    const orderBlock = document.getElementById('order');
     const sendBtn = document.getElementById('send');
 
     if (checkoutBtn) {
