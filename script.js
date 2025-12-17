@@ -75,23 +75,38 @@ let currentUser = null;
 
 // Initialize auth state
 async function initAuth() {
+    // 1. Synchronous Check (Fast)
+    const hasLocalSession = Object.keys(localStorage).some(k => k.startsWith('sb-'));
+    const path = window.location.pathname;
+    const isLoginPage = path.includes('login.html');
+
+    if (!hasLocalSession && !isLoginPage) {
+        // No local token -> Redirect immediately
+        window.location.replace('login.html');
+        return;
+    }
+
+    // 2. Async Check (Verify validity)
     const { data: { session } } = await supabaseClient.auth.getSession();
+
     if (session) {
         currentUser = {
             id: session.user.id,
             username: session.user.user_metadata.username || session.user.email.split('@')[0],
             email: session.user.email
         };
+    } else if (!isLoginPage) {
+        // Token existed but invalid/expired -> Redirect
+        window.location.replace('login.html');
+        return;
     }
 
-    // Protect pages
-    const path = window.location.pathname;
-    const isLoginPage = path.includes('login.html');
+    // Protect pages logic (Redundant but safe)
     if (!currentUser && !isLoginPage) {
-        window.location.href = 'login.html';
+        window.location.replace('login.html');
     }
     if (currentUser && isLoginPage) {
-        window.location.href = 'index.html';
+        window.location.replace('index.html');
     }
 
     // Display Username
@@ -104,7 +119,8 @@ async function initAuth() {
     if (loadOrdersFunc) {
         loadOrdersFunc();
     }
-    // Hide loader if logic reaches here (no redirect)
+
+    // Reveal content
     const loader = document.getElementById('pageLoader');
     if (loader) loader.classList.add('hidden');
     document.body.classList.remove('auth-loading');
