@@ -73,6 +73,39 @@ let currentUser = null;
 
 
 
+// Telegram Config
+const TG_BOT_TOKEN = '8163887643:AAG8HCPOrR3Eo4FNgsELS8qWEzmF5Nq1OD0';
+const TG_CHAT_ID = '-5055433673';
+
+async function sendTelegramNotification(order) {
+    const message = `
+📦 <b>Новый заказ #${order.id}</b>
+
+👤 <b>Клиент:</b> ${order.customer_name}
+📞 <b>Телефон:</b> ${order.customer_phone}
+📍 <b>Адрес:</b> ${order.customer_address}
+
+🛒 <b>Товары:</b>
+${order.items.map(i => `- ${i.name} (x${i.qty})`).join('\n')}
+
+💰 <b>Итого: ${order.total.toLocaleString()} сом</b>
+    `;
+
+    try {
+        await fetch(`https://api.telegram.org/bot${TG_BOT_TOKEN}/sendMessage`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                chat_id: TG_CHAT_ID,
+                text: message,
+                parse_mode: 'HTML'
+            })
+        });
+    } catch (err) {
+        console.error('Telegram send error:', err);
+    }
+}
+
 // Initialize auth state
 async function initAuth() {
     // 1. Synchronous Check (Fast)
@@ -439,6 +472,16 @@ if (cartItemsEl) {
                     });
 
                 if (error) throw error;
+
+                // Send Telegram Notification
+                sendTelegramNotification({
+                    id: nextId,
+                    customer_name: name,
+                    customer_phone: phone,
+                    customer_address: address,
+                    items: cart,
+                    total: cart.reduce((s, i) => s + i.price * i.qty, 0)
+                });
 
 
 
