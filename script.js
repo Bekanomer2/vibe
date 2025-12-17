@@ -161,8 +161,8 @@ async function handleLogin(e) {
     }
 }
 
-function logout() {
-    supabaseClient.auth.signOut();
+async function logout() {
+    await supabaseClient.auth.signOut();
     currentUser = null;
     window.location.href = 'login.html';
 }
