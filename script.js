@@ -104,6 +104,9 @@ async function initAuth() {
     if (loadOrdersFunc) {
         loadOrdersFunc();
     }
+    // Hide loader if logic reaches here (no redirect)
+    const loader = document.getElementById('pageLoader');
+    if (loader) loader.classList.add('hidden');
 }
 
 initAuth();
@@ -502,10 +505,12 @@ if (ordersListEl) {
 document.addEventListener('DOMContentLoaded', () => {
     const loader = document.getElementById('pageLoader');
 
-    // 1. Initial Load Fade Out
-    setTimeout(() => {
-        if (loader) loader.classList.add('hidden');
-    }, 100); // Fast fade out on load (100ms)
+    // 1. Initial Load Fade Out - REMOVED (Handled by initAuth)
+    // setTimeout(() => {
+    //    if (loader && !window.location.pathname.includes('login.html') && !window.location.pathname.includes('index.html')) {
+    //        // Emergency backup if initAuth fails? No, simpler to just wait.
+    //    }
+    // }, 100);
 
     // 2. Link Click Interception
     document.querySelectorAll('a').forEach(link => {
