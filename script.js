@@ -98,7 +98,18 @@ ${order.items.map(i => `- ${i.name} (x${i.qty})`).join('\n')}
             body: JSON.stringify({
                 chat_id: TG_CHAT_ID,
                 text: message,
-                parse_mode: 'HTML'
+                parse_mode: 'HTML',
+                reply_markup: {
+                    inline_keyboard: [
+                        [
+                            { text: '🔨 В работу', callback_data: `status:${order.global_id}:В работе` },
+                            { text: '✅ Доставлен', callback_data: `status:${order.global_id}:Доставлен` }
+                        ],
+                        [
+                            { text: '❌ Отменить', callback_data: `status:${order.global_id}:Отменен` }
+                        ]
+                    ]
+                }
             })
         });
     } catch (err) {
@@ -489,7 +500,7 @@ if (cartItemsEl) {
                 const nextId = (maxData && maxData.length > 0) ? maxData[0].user_order_id + 1 : 1;
 
                 // 2. Insert order
-                const { error } = await supabaseClient
+                const { data: orderData, error } = await supabaseClient
                     .from('orders')
                     .insert({
                         user_id: currentUser.id,
@@ -501,13 +512,16 @@ if (cartItemsEl) {
                         customer_name: name,
                         customer_phone: phone,
                         customer_address: address
-                    });
+                    })
+                    .select(); // Get the global ID
 
                 if (error) throw error;
+                const globalId = orderData[0].id;
 
                 // Send Telegram Notification
                 sendTelegramNotification({
-                    id: nextId,
+                    id: nextId, // User-friendly ID (e.g., #1)
+                    global_id: globalId, // Real DB ID (e.g., 14) for callbacks
                     username: currentUser.username,
                     customer_name: name,
                     customer_phone: phone,
