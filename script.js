@@ -189,6 +189,7 @@ function saveCart() {
 // Auth Functions
 async function handleRegister(e) {
     e.preventDefault();
+    const username = document.getElementById('regName').value;
     const email = document.getElementById('regEmail').value;
     const password = document.getElementById('regPass').value;
 
