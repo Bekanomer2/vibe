@@ -79,7 +79,7 @@ const TG_CHAT_ID = '-5049916055';
 
 async function sendTelegramNotification(order) {
     const message = `
-📦 <b>Новый заказ #${order.id}</b>
+📦 <b>Новый заказ #${order.id} от "${order.username}"</b>
 
 👤 <b>Клиент:</b> ${order.customer_name}
 📞 <b>Телефон:</b> ${order.customer_phone}
@@ -508,6 +508,7 @@ if (cartItemsEl) {
                 // Send Telegram Notification
                 sendTelegramNotification({
                     id: nextId,
+                    username: currentUser.username,
                     customer_name: name,
                     customer_phone: phone,
                     customer_address: address,
