@@ -482,16 +482,23 @@ if (cartItemsEl) {
                 return;
             }
 
-            // Проверка телефона: разрешены цифры, пробелы, скобки, тире, плюс
-            const phoneRegex = /^[\d\+\s\-\(\)]+$/;
-            // Проверка: сам regex + минимум 7 цифр
-            if (!phoneRegex.test(phone) || phone.replace(/\D/g, '').length < 7) {
-                showToast('Введите корректный номер телефона (минимум 7 цифр)', 'error');
+            // Валидация телефона (строгие форматы)
+            // Разрешены: +996..., 996..., 0...
+            const phoneClean = phone.replace(/[\s\-\(\)]/g, ''); // Убираем пробелы и скобки
+            const phoneRegexStrict = /^(?:\+996\d{9}|996\d{9}|0\d{9})$/;
+
+            if (!phoneRegexStrict.test(phoneClean)) {
+                showToast('Неверный формат телефона. Используйте: 0777..., 996555... или +996...', 'error');
                 return;
             }
 
-            if (address.length < 5) {
-                showToast('Адрес слишком короткий', 'error');
+            // Валидация адреса (Улица + Номер дома)
+            // Ищем буквы (улица) и цифры (дом)
+            const hasLetters = /[a-zA-Zа-яА-ЯёЁ]/.test(address);
+            const hasDigits = /\d/.test(address);
+
+            if (address.length < 5 || !hasLetters || !hasDigits) {
+                showToast('Адрес должен содержать название улицы и номер дома', 'error');
                 return;
             }
 
