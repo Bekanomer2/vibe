@@ -218,6 +218,7 @@ async function handleRegister(e) {
         if (error) throw error;
 
         showToast('Регистрация успешна! Войдите.', 'success');
+        document.getElementById('registerForm').reset();
         setTimeout(() => {
             document.querySelectorAll('.auth-tab')[0].click(); // Switch to login tab
         }, 1500);
@@ -401,7 +402,12 @@ if (productsEl) {
     // Mobile Menu
     const burger = document.getElementById('burger');
     const nav = document.getElementById('nav');
-    if (burger) burger.onclick = () => nav.classList.toggle('active');
+    if (burger) {
+        burger.onclick = () => {
+            nav.classList.toggle('active');
+            burger.classList.toggle('active');
+        };
+    }
 
     // Cart Button Logic (Handled by global transition now)
     /* 
