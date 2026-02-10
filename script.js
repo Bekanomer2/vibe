@@ -477,6 +477,24 @@ if (cartItemsEl) {
                 return;
             }
 
+            if (name.length < 2) {
+                showToast('Имя должно быть не короче 2 букв', 'error');
+                return;
+            }
+
+            // Проверка телефона: разрешены цифры, пробелы, скобки, тире, плюс
+            const phoneRegex = /^[\d\+\s\-\(\)]+$/;
+            // Проверка: сам regex + минимум 7 цифр
+            if (!phoneRegex.test(phone) || phone.replace(/\D/g, '').length < 7) {
+                showToast('Введите корректный номер телефона (минимум 7 цифр)', 'error');
+                return;
+            }
+
+            if (address.length < 5) {
+                showToast('Адрес слишком короткий', 'error');
+                return;
+            }
+
             const order = {
                 userId: currentUser.id,
                 date: new Date().toLocaleString(),
