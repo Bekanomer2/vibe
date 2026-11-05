@@ -1,0 +1,238 @@
+// ==========================================
+// EzShop - Authentication & Admin Role System
+// ==========================================
+
+let currentUser = null;
+
+// Built-in Admin Account Configuration
+const ADMIN_CONFIG = {
+    email: 'admin@ezshop.kg',
+    password: 'admin123',
+    username: 'Главный Администратор',
+    role: 'admin'
+};
+
+// Admin Initializer: ensures the admin account exists in Supabase
+async function adminInitializer() {
+    if (!supabaseClient) return;
+
+    try {
+        // Attempt to create system admin user
+        const { data, error } = await supabaseClient.auth.signUp({
+            email: ADMIN_CONFIG.email,
+            password: ADMIN_CONFIG.password,
+            options: {
+                data: {
+                    username: ADMIN_CONFIG.username,
+                    role: 'admin'
+                }
+            }
+        });
+        if (data && data.user) {
+            console.log('EzShop: System admin account initialized');
+        }
+    } catch (e) {
+        // Already exists or network, completely safe to ignore
+    }
+}
+
+// Check if a user has admin privileges
+function isAdmin(user = currentUser) {
+    if (!user) return false;
+    const emailMatch = user.email && user.email.toLowerCase() === ADMIN_CONFIG.email.toLowerCase();
+    const roleMatch = user.role === 'admin' || user.user_metadata?.role === 'admin';
+    return emailMatch || roleMatch;
+}
+
+// Show/hide admin-only navigation links based on user role
+function updateAdminUI() {
+    const adminLinks = document.querySelectorAll('.admin-only-nav');
+    const userIsAdmin = isAdmin(currentUser);
+
+    adminLinks.forEach(link => {
+        if (userIsAdmin) {
+            link.classList.add('visible');
+            link.style.display = 'inline-block';
+        } else {
+            link.classList.remove('visible');
+            link.style.display = 'none';
+        }
+    });
+}
+
+// Initialize Auth State on every page
+async function initAuth() {
+    // 1. Try to initialize admin account in background
+    adminInitializer();
+
+    const hasLocalSession = Object.keys(localStorage).some(k => k.startsWith('sb-'));
+    const path = window.location.pathname;
+    const isLoginPage = path.includes('login.html');
+    const isAdminPage = path.includes('admin.html') || path.includes('admin-orders.html');
+
+    if (!hasLocalSession && !isLoginPage) {
+        window.location.replace('login.html');
+        return;
+    }
+
+    const { data: { session } } = await supabaseClient.auth.getSession();
+
+    if (session) {
+        currentUser = {
+            id: session.user.id,
+            username: session.user.user_metadata.username || session.user.email.split('@')[0],
+            email: session.user.email,
+            role: session.user.user_metadata.role || (session.user.email.toLowerCase() === ADMIN_CONFIG.email.toLowerCase() ? 'admin' : 'user')
+        };
+    } else if (!isLoginPage) {
+        window.location.replace('login.html');
+        return;
+    }
+
+    if (!currentUser && !isLoginPage) {
+        window.location.replace('login.html');
+        return;
+    }
+    if (currentUser && isLoginPage) {
+        window.location.replace('index.html');
+        return;
+    }
+
+    // STRICT ADMIN ROUTE PROTECTION:
+    // If the user visits admin.html without admin privileges -> kick out to index.html!
+    if (isAdminPage && !isAdmin(currentUser)) {
+        showToast('Доступ запрещен. Страница доступна только администратору!', 'error');
+        setTimeout(() => {
+            window.location.replace('index.html');
+        }, 1500);
+        return;
+    }
+
+    // Display Username in header
+    const usernameEl = document.getElementById('usernameDisplay');
+    if (usernameEl && currentUser) {
+        const adminBadge = isAdmin(currentUser) ? ' 👑 (Admin)' : '';
+        usernameEl.textContent = `${currentUser.username}${adminBadge}`;
+    }
+
+    // Update visibility of Admin link in navigation
+    updateAdminUI();
+
+    // Load Cart for current user
+    if (typeof loadCart === 'function') loadCart();
+
+    // Update Favorites & Compare Bars if available
+    if (typeof updateFavoritesUI === 'function') updateFavoritesUI();
+    if (typeof updateCompareBar === 'function') updateCompareBar();
+
+    // Load orders if on orders page
+    if (typeof loadOrdersFunc === 'function') loadOrdersFunc();
+
+    // Initialize Admin Dashboard if on admin page
+    if (path.includes('admin.html') && !path.includes('admin-orders.html') && typeof initAdminDashboard === 'function') {
+        initAdminDashboard();
+    }
+
+    // Initialize Admin Orders Page if on admin-orders page
+    if (path.includes('admin-orders.html') && typeof initAdminOrdersPage === 'function') {
+        initAdminOrdersPage();
+    }
+
+    // Initialize Product Details if on product page
+    if (path.includes('product.html') && typeof initProductPage === 'function') {
+        initProductPage();
+    }
+
+    // Reveal page content
+    const loader = document.getElementById('pageLoader');
+    if (loader) loader.classList.add('hidden');
+    document.body.classList.remove('auth-loading');
+}
+
+// Auth Handlers
+async function handleRegister(e) {
+    e.preventDefault();
+    const username = document.getElementById('regName').value.trim();
+    const email = document.getElementById('regEmail').value.trim();
+    const password = document.getElementById('regPass').value.trim();
+
+    try {
+        const { data, error } = await supabaseClient.auth.signUp({
+            email: email,
+            password: password,
+            options: {
+                data: {
+                    username: username,
+                    role: email.toLowerCase() === ADMIN_CONFIG.email.toLowerCase() ? 'admin' : 'user'
+                }
+            }
+        });
+
+        if (error) throw error;
+
+        // Auto-login immediately after registration
+        let session = data.session;
+        let user = data.user;
+
+        if (!session) {
+            const loginRes = await supabaseClient.auth.signInWithPassword({
+                email: email,
+                password: password
+            });
+            if (loginRes.error) throw loginRes.error;
+            session = loginRes.data.session;
+            user = loginRes.data.user;
+        }
+
+        currentUser = {
+            id: user.id,
+            username: user.user_metadata?.username || username || email.split('@')[0],
+            email: user.email,
+            role: user.user_metadata?.role || (user.email.toLowerCase() === ADMIN_CONFIG.email.toLowerCase() ? 'admin' : 'user')
+        };
+
+        showToast(`Добро пожаловать, ${currentUser.username}! Входим...`, 'success');
+
+        setTimeout(() => {
+            window.location.href = 'index.html';
+        }, 800);
+    } catch (err) {
+        showToast(err.message, 'error');
+    }
+}
+
+async function handleLogin(e) {
+    e.preventDefault();
+    const login = document.getElementById('loginInput').value.trim();
+    const password = document.getElementById('loginPass').value.trim();
+
+    try {
+        const { data, error } = await supabaseClient.auth.signInWithPassword({
+            email: login,
+            password: password
+        });
+
+        if (error) throw error;
+
+        currentUser = {
+            id: data.user.id,
+            username: data.user.user_metadata.username || data.user.email.split('@')[0],
+            email: data.user.email,
+            role: data.user.user_metadata?.role || (data.user.email.toLowerCase() === ADMIN_CONFIG.email.toLowerCase() ? 'admin' : 'user')
+        };
+        window.location.href = 'index.html';
+    } catch (err) {
+        showToast(err.message, 'error');
+    }
+}
+
+function logout() {
+    Object.keys(localStorage).forEach(key => {
+        if (key.includes('supabase') || key.startsWith('sb-')) {
+            localStorage.removeItem(key);
+        }
+    });
+    currentUser = null;
+    window.supabaseClient = null;
+    window.location.replace('login.html');
+}

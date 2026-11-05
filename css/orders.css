@@ -1,0 +1,213 @@
+/* ==========================================
+   Orders Page Styles (orders.html)
+   ========================================== */
+.orders-container {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 30px 20px;
+}
+
+.orders-page-header {
+    margin-bottom: 30px;
+}
+
+.back-link {
+    display: inline-block;
+    color: var(--accent);
+    margin-bottom: 12px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.orders-page-header h1 {
+    font-size: 28px;
+    margin-bottom: 6px;
+}
+
+.orders-subtitle {
+    color: var(--muted);
+    font-size: 14px;
+}
+
+.orders-list {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.order-card {
+    background: #0f172a;
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 24px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+.order-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.order-id {
+    font-size: 18px;
+    font-weight: 800;
+    color: #fff;
+    margin-right: 12px;
+}
+
+.order-date {
+    font-size: 13px;
+    color: var(--muted);
+}
+
+.order-status-badge {
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.status-processing {
+    background: rgba(56, 189, 248, 0.15);
+    color: var(--accent);
+    border: 1px solid rgba(56, 189, 248, 0.3);
+}
+
+.status-delivered {
+    background: rgba(16, 185, 129, 0.15);
+    color: var(--success);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.status-return {
+    background: rgba(249, 115, 22, 0.15);
+    color: var(--return-color);
+    border: 1px solid rgba(249, 115, 22, 0.4);
+}
+
+.status-cancelled {
+    background: rgba(239, 68, 68, 0.15);
+    color: var(--danger);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+/* Order Tracker Steps */
+.order-tracker {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #020617;
+    border: 1px solid var(--border);
+    padding: 16px 24px;
+    border-radius: 14px;
+    margin-bottom: 20px;
+}
+
+.tracker-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+
+.tracker-dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #334155;
+    transition: 0.3s;
+}
+
+.tracker-label {
+    font-size: 12px;
+    color: var(--muted);
+    font-weight: 500;
+}
+
+.tracker-line {
+    flex: 1;
+    height: 2px;
+    background: #334155;
+    margin: 0 10px;
+    margin-bottom: 20px;
+}
+
+.tracker-step.active .tracker-dot {
+    background: var(--accent);
+    box-shadow: 0 0 10px var(--accent);
+}
+
+.tracker-step.active .tracker-label {
+    color: var(--text);
+    font-weight: 700;
+}
+
+.tracker-step.active.done .tracker-dot {
+    background: var(--success);
+    box-shadow: 0 0 10px var(--success);
+}
+
+.tracker-step.active.return .tracker-dot {
+    background: var(--return-color);
+    box-shadow: 0 0 10px var(--return-color);
+}
+
+.tracker-step.active.cancelled .tracker-dot {
+    background: var(--danger);
+    box-shadow: 0 0 10px var(--danger);
+}
+
+.tracker-line.active {
+    background: var(--accent);
+}
+
+.order-customer-info {
+    font-size: 13px;
+    color: var(--muted);
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px dashed var(--border);
+    padding: 12px 16px;
+    border-radius: 10px;
+    margin-bottom: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.order-items {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.order-item {
+    display: flex;
+    justify-content: space-between;
+    font-size: 14px;
+    color: #cbd5e1;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.order-total-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid var(--border);
+    padding-top: 14px;
+    font-size: 16px;
+}
+
+.order-total-sum {
+    font-size: 20px;
+    font-weight: 900;
+    color: var(--accent);
+}

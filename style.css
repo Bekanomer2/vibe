@@ -1,0 +1,12 @@
+/* =========================================================
+   EzShop Stylesheet Index
+   Modular CSS Architecture
+   ========================================================= */
+
+@import url('css/base.css');
+@import url('css/catalog.css');
+@import url('css/product.css');
+@import url('css/admin.css');
+@import url('css/orders.css');
+@import url('css/cart.css');
+@import url('css/compare.css');

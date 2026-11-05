@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Корзина — EzShop</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body class="auth-loading">
+  <div class="loader-overlay" id="pageLoader">
+    <img src="img/logo.png" alt="Loading..." class="loader-logo">
+  </div>
+
+  <header>
+    <a href="index.html" class="logo">
+      <img src="img/logo.png" alt="EzShop Logo">
+    </a>
+    <nav id="nav">
+      <a href="index.html">🛍️ Каталог</a>
+      <a href="javascript:void(0)" onclick="openFavoritesModal()">❤️ Избранное (<span class="nav-fav-count">0</span>)</a>
+      <a href="orders.html">📦 Заказы</a>
+      <a href="admin.html" class="admin-only-nav">⚙️ Админка</a>
+      <div class="user-panel">
+        <span id="usernameDisplay"></span>
+        <button onclick="logout()">Выйти</button>
+      </div>
+    </nav>
+    <div class="burger" id="burger"><span></span><span></span><span></span></div>
+  </header>
+
+  <div class="container cart-page-container">
+    <div style="margin-bottom: 20px;">
+      <a href="index.html" class="back-link">← Вернуться в каталог</a>
+      <h1 style="margin-top: 10px;">🛒 Ваша корзина</h1>
+    </div>
+    <div id="items"></div>
+    <div class="total" id="total"></div>
+    <button id="checkout"
+      style="margin-top:20px;background:#38bdf8;color:#020617;cursor:pointer;border:none;padding:14px 24px;font-weight:800;border-radius:12px;font-size:16px;">Оформить
+      заказ</button>
+
+    <div id="order" style="display:none;margin-top:24px;background:#0f172a;padding:24px;border-radius:16px;border:1px solid #1e293b;">
+      <h3 style="margin-bottom: 14px; color: var(--accent);">Данные получателя</h3>
+      <input id="name" placeholder="Имя и фамилия" style="width:100%;padding:12px;margin:8px 0;background:#020617;border:1px solid #1e293b;color:var(--text);border-radius:8px;">
+      <input id="phone" placeholder="Номер телефона (+996...)" style="width:100%;padding:12px;margin:8px 0;background:#020617;border:1px solid #1e293b;color:var(--text);border-radius:8px;">
+      <small style="display:block; color:var(--muted); margin-bottom:12px; font-size:12px;">
+        ⚠️ Просьба указывать корректный номер телефона. Менеджер свяжется с вами для подтверждения заказа.
+      </small>
+      <input id="address" placeholder="Адрес доставки (город, улица, дом/квартира)" style="width:100%;padding:12px;margin:8px 0;background:#020617;border:1px solid #1e293b;color:var(--text);border-radius:8px;">
+      <button id="send"
+        style="margin-top:14px;background:#38bdf8;color:#020617;cursor:pointer;border:none;padding:12px 28px;font-weight:800;border-radius:10px;font-size:15px;">Подтвердить заказ</button>
+    </div>
+  </div>
+
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Модульные скрипты -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/config.js"></script>
+  <script src="js/products-data.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/favorites.js"></script>
+  <script src="js/cart.js"></script>
+  <script src="js/main.js"></script>
+</body>
+
+</html>

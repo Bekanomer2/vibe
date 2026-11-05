@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EzShop — Магазин смартфонов</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body class="auth-loading">
+    <div class="loader-overlay" id="pageLoader">
+        <img src="img/logo.png" alt="Loading..." class="loader-logo">
+    </div>
+
+    <header>
+        <a href="index.html" class="logo">
+            <img src="img/logo.png" alt="EzShop Logo">
+        </a>
+        <nav id="nav">
+            <a href="index.html">Каталог</a>
+            <a href="javascript:void(0)" onclick="openFavoritesModal()">❤️ Избранное (<span class="nav-fav-count">0</span>)</a>
+            <a href="javascript:void(0)" onclick="openCompareModal()">⚖️ Сравнение (<span id="navCompareCount">0</span>)</a>
+            <a href="admin.html" class="admin-only-nav">⚙️ Админка</a>
+            <a href="#footer-about">О нас</a>
+            <a href="#footer-contacts">Контакты</a>
+            <div class="user-panel">
+                <span id="usernameDisplay"></span>
+                <button onclick="logout()">Выйти</button>
+            </div>
+        </nav>
+        <div class="burger" id="burger"><span></span><span></span><span></span></div>
+    </header>
+
+    <div class="main-container">
+        <aside class="sidebar">
+            <div class="filter-group">
+                <h3>Цена (сом)</h3>
+                <div class="price-inputs">
+                    <input type="number" id="minPrice" placeholder="От" oninput="applyFilters()">
+                    <input type="number" id="maxPrice" placeholder="До" oninput="applyFilters()">
+                </div>
+            </div>
+
+            <div class="filter-group">
+                <h3>Бренд</h3>
+                <div id="brandFilters"></div>
+            </div>
+
+            <div class="filter-group">
+                <h3>Оперативная память</h3>
+                <div id="ramFilters"></div>
+            </div>
+
+            <div class="filter-group">
+                <h3>Встроенная память</h3>
+                <div id="storageFilters"></div>
+            </div>
+
+            <div class="filter-group" style="padding-top: 8px; border-top: 1px dashed var(--border);">
+                <label class="checkbox-label" style="font-weight: 700; color: #f43f5e;">
+                    <input type="checkbox" id="onlyFavoritesCheck" onchange="applyFilters()"> ❤️ Только избранные
+                </label>
+            </div>
+
+            <button class="btn-reset-filters" onclick="resetAllFilters()">Сбросить фильтры</button>
+        </aside>
+
+        <main class="content">
+            <div class="top-bar">
+                <input type="text" id="search" placeholder="Поиск смартфона по названию..." oninput="applyFilters()">
+                <div class="sort-box">
+                    <select id="sort" onchange="applyFilters()">
+                        <option value="default">По умолчанию</option>
+                        <option value="price_asc">Сначала дешевле</option>
+                        <option value="price_desc">Сначала дороже</option>
+                        <option value="az">По названию (А-Я)</option>
+                        <option value="za">По названию (Я-А)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="catalog-summary">
+                <span>Найдено моделей: <strong id="productsCount">0</strong></span>
+            </div>
+            <section class="products" id="products"></section>
+        </main>
+    </div>
+
+    <a href="orders.html" class="orders-btn" id="ordersBtn">📦 <span class="btn-text">Заказы</span></a>
+    <a href="cart.html" class="cart-btn" id="cartBtn">🛒 <span class="btn-text">Корзина</span> <span id="cartCount">0</span></a>
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Плавающая панель сравнения -->
+    <div class="compare-bar" id="compareBar" style="display: none;">
+        <div class="compare-bar-content">
+            <span id="compareBarText">Выбрано 0 товаров для сравнения</span>
+            <div class="compare-bar-actions">
+                <button class="btn-compare-open" onclick="openCompareModal()">Сравнить</button>
+                <button class="btn-compare-clear" onclick="clearCompare()">Очистить</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно сравнения -->
+    <div class="modal-overlay" id="compareModal" style="display: none;">
+        <div class="modal-content compare-modal-content">
+            <div class="modal-header">
+                <h3>⚖️ Сравнение смартфонов</h3>
+                <button class="modal-close" onclick="closeCompareModal()">&times;</button>
+            </div>
+            <div class="compare-table-wrapper" id="compareTableContainer"></div>
+        </div>
+    </div>
+
+    <footer id="footer">
+        <div class="footer-container">
+            <div class="footer-section" id="footer-about">
+                <h3>EzShop</h3>
+                <p>Мы — магазин электроники, специализирующийся на качественных смартфонах. Наша цель — предоставить клиентам лучшие цены и удобный сервис покупки с гарантией.</p>
+            </div>
+            <div class="footer-section" id="footer-contacts">
+                <h3>Контакты</h3>
+                <p>📍 г. Бишкек, ул. Киевская 10</p>
+                <p>📞 +996 (777) 12-34-56</p>
+                <p>✉️ support@ezshop.kg</p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            &copy; 2026 EzShop. Все права защищены.
+        </div>
+    </footer>
+
+    <!-- Скрипты модульной архитектуры -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/config.js"></script>
+    <script src="js/products-data.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/cart.js"></script>
+    <script src="js/favorites.js"></script>
+    <script src="js/compare.js"></script>
+    <script src="js/catalog.js"></script>
+    <script src="js/main.js"></script>
+</body>
+
+</html>

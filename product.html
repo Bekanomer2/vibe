@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Детали товара — EzShop</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body class="auth-loading">
+    <div class="loader-overlay" id="pageLoader">
+        <img src="img/logo.png" alt="Loading..." class="loader-logo">
+    </div>
+
+    <header>
+        <a href="index.html" class="logo">
+            <img src="img/logo.png" alt="EzShop Logo">
+        </a>
+        <nav id="nav">
+            <a href="index.html">Каталог</a>
+            <a href="javascript:void(0)" onclick="openFavoritesModal()">❤️ Избранное (<span class="nav-fav-count">0</span>)</a>
+            <a href="javascript:void(0)" onclick="openCompareModal()">⚖️ Сравнение (<span id="navCompareCount">0</span>)</a>
+            <a href="admin.html" class="admin-only-nav">⚙️ Админка</a>
+            <a href="index.html#footer-about">О нас</a>
+            <a href="index.html#footer-contacts">Контакты</a>
+            <div class="user-panel">
+                <span id="usernameDisplay"></span>
+                <button onclick="logout()">Выйти</button>
+            </div>
+        </nav>
+        <div class="burger" id="burger"><span></span><span></span><span></span></div>
+    </header>
+
+    <div class="product-page-container">
+        <!-- Хлебные крошки -->
+        <div class="breadcrumbs" id="breadcrumbs">
+            <a href="index.html">Главная</a> <span>/</span>
+            <span id="bcBrand">Бренд</span> <span>/</span>
+            <span id="bcName" class="current">Модель</span>
+        </div>
+
+        <div class="product-detail-layout" id="productDetailContainer">
+            <div style="text-align: center; padding: 60px; color: var(--muted);">
+                Загрузка информации о товаре...
+            </div>
+        </div>
+
+        <!-- Секция отзывов покупателей -->
+        <section class="reviews-section" id="reviewsSection">
+            <!-- Заполняется динамически через JS -->
+        </section>
+
+        <!-- Похожие товары -->
+        <section class="similar-section">
+            <h2 class="section-title">Похожие модели</h2>
+            <div class="products" id="similarProducts"></div>
+        </section>
+    </div>
+
+    <a href="orders.html" class="orders-btn" id="ordersBtn">📦 <span class="btn-text">Заказы</span></a>
+    <a href="cart.html" class="cart-btn" id="cartBtn">🛒 <span class="btn-text">Корзина</span> <span id="cartCount">0</span></a>
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Модалка сравнения -->
+    <div class="compare-bar" id="compareBar" style="display: none;">
+        <div class="compare-bar-content">
+            <span id="compareBarText">Выбрано 0 товаров для сравнения</span>
+            <div class="compare-bar-actions">
+                <button class="btn-compare-open" onclick="openCompareModal()">Сравнить</button>
+                <button class="btn-compare-clear" onclick="clearCompare()">Очистить</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="compareModal" style="display: none;">
+        <div class="modal-content compare-modal-content">
+            <div class="modal-header">
+                <h3>⚖️ Сравнение смартфонов</h3>
+                <button class="modal-close" onclick="closeCompareModal()">&times;</button>
+            </div>
+            <div class="compare-table-wrapper" id="compareTableContainer"></div>
+        </div>
+    </div>
+
+    <footer id="footer">
+        <div class="footer-container">
+            <div class="footer-section">
+                <h3>EzShop</h3>
+                <p>Ваш надежный магазин смартфонов с гарантией качества и быстрой доставкой по всему Кыргызстану.</p>
+            </div>
+            <div class="footer-section">
+                <h3>Контакты</h3>
+                <p>📍 г. Бишкек, ул. Киевская 10</p>
+                <p>📞 +996 (777) 12-34-56</p>
+                <p>✉️ support@ezshop.kg</p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            &copy; 2026 EzShop. Все права защищены.
+        </div>
+    </footer>
+
+    <!-- Модульные скрипты -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/config.js"></script>
+    <script src="js/products-data.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/cart.js"></script>
+    <script src="js/favorites.js"></script>
+    <script src="js/compare.js"></script>
+    <script src="js/product-detail.js"></script>
+    <script src="js/main.js"></script>
+</body>
+
+</html>

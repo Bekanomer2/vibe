@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Панель управления — EzShop Admin</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body class="auth-loading admin-body">
+    <div class="loader-overlay" id="pageLoader">
+        <img src="img/logo.png" alt="Loading..." class="loader-logo">
+    </div>
+
+    <header class="admin-header">
+        <a href="index.html" class="logo">
+            <img src="img/logo.png" alt="EzShop Logo">
+        </a>
+        <div class="admin-header-title">
+            <span class="admin-badge">Admin</span>
+            <h2>Управление магазином</h2>
+        </div>
+        <nav id="nav">
+            <a href="index.html">🛍️ В магазин</a>
+            <a href="admin-orders.html">📦 Все заказы</a>
+            <div class="user-panel">
+                <span id="usernameDisplay">Администратор</span>
+                <button onclick="logout()" class="admin-logout-btn">Выход</button>
+            </div>
+        </nav>
+        <div class="burger" id="burger"><span></span><span></span><span></span></div>
+    </header>
+
+    <div class="admin-container">
+        <!-- Статистика каталога (только нужные плашки) -->
+        <div class="admin-stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon">📱</div>
+                <div class="stat-info">
+                    <span class="stat-label">Всего смартфонов</span>
+                    <h3 id="statTotalCount">0</h3>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">🏷️</div>
+                <div class="stat-info">
+                    <span class="stat-label">Брендов в каталоге</span>
+                    <h3 id="statBrandCount">0</h3>
+                </div>
+            </div>
+        </div>
+
+        <!-- Вкладки Админки -->
+        <div class="admin-tabs">
+            <button class="admin-tab-btn active" id="tabBtnProducts" onclick="switchAdminTab('products')">📱 Телефоны (CRUD)</button>
+            <button class="admin-tab-btn" id="tabBtnBrands" onclick="switchAdminTab('brands')">🏷️ Бренды (CRUD)</button>
+        </div>
+
+        <!-- ==========================================
+             ВКЛАДКА 1: Управление Телефонами (CRUD)
+             ========================================== -->
+        <div class="admin-tab-content active" id="tabContentProducts">
+            <div class="admin-layout">
+                <!-- Форма добавления / редактирования телефона -->
+                <div class="admin-form-panel">
+                    <div class="panel-header">
+                        <h3 id="formTitle">➕ Добавить новый телефон</h3>
+                        <button type="button" id="cancelEditBtn" class="btn-text-small" style="display: none;" onclick="cancelEditing()">Отмена</button>
+                    </div>
+
+                    <form id="productForm" onsubmit="handleProductFormSubmit(event)">
+                        <input type="hidden" id="editProductId" value="">
+
+                        <div class="form-row">
+                            <div class="form-group flex-2">
+                                <label for="prodName">Название модели *</label>
+                                <input type="text" id="prodName" class="admin-input" placeholder="Например: iPhone 16 Pro Max" required oninput="updateLivePreview()">
+                            </div>
+                            <div class="form-group flex-1">
+                                <label for="prodBrand">Бренд *</label>
+                                <select id="prodBrand" class="admin-input" required onchange="updateLivePreview()">
+                                    <!-- Заполняется динамически из brandsData -->
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group flex-1">
+                                <label for="prodPrice">Цена (сом) *</label>
+                                <input type="number" id="prodPrice" class="admin-input" placeholder="75000" min="100" required oninput="updateLivePreview()">
+                            </div>
+                            <div class="form-group flex-1">
+                                <label for="prodColor">Цвет *</label>
+                                <input type="text" id="prodColor" class="admin-input" placeholder="Space Black" required oninput="updateLivePreview()">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group flex-1">
+                                <label for="prodRam">Оперативная память (RAM, ГБ) *</label>
+                                <select id="prodRam" class="admin-input" required onchange="updateLivePreview()">
+                                    <option value="4">4 ГБ</option>
+                                    <option value="6">6 ГБ</option>
+                                    <option value="8" selected>8 ГБ</option>
+                                    <option value="12">12 ГБ</option>
+                                    <option value="16">16 ГБ</option>
+                                    <option value="24">24 ГБ</option>
+                                </select>
+                            </div>
+                            <div class="form-group flex-1">
+                                <label for="prodStorage">Встроенная память (ROM, ГБ) *</label>
+                                <select id="prodStorage" class="admin-input" required onchange="updateLivePreview()">
+                                    <option value="64">64 ГБ</option>
+                                    <option value="128">128 ГБ</option>
+                                    <option value="256" selected>256 ГБ</option>
+                                    <option value="512">512 ГБ</option>
+                                    <option value="1024">1024 ГБ (1 ТБ)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group flex-1">
+                                <label for="prodDisplay">Дисплей *</label>
+                                <input type="text" id="prodDisplay" class="admin-input" placeholder="6.7\" OLED 120Hz" required oninput="updateLivePreview()">
+                            </div>
+                            <div class="form-group flex-1">
+                                <label for="prodBattery">Батарея (мАч) *</label>
+                                <input type="number" id="prodBattery" class="admin-input" placeholder="5000" required oninput="updateLivePreview()">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="prodImg">Изображение (URL или выберите готовое) *</label>
+                            <div class="image-input-group">
+                                <input type="text" id="prodImg" class="admin-input" placeholder="img/iphone 15 pro max.jpg или прямая ссылка https://" required oninput="updateLivePreview()">
+                                <select id="presetImages" class="admin-input select-preset" onchange="choosePresetImage(this.value)">
+                                    <option value="">🖼️ Выбрать из галереи</option>
+                                    <option value="img/iPhone 15 pro max.jpg">iPhone 15 Pro Max</option>
+                                    <option value="img/iPhone 14 Pro.jpg">iPhone 14 Pro</option>
+                                    <option value="img/iphone 13.jpg">iPhone 13</option>
+                                    <option value="img/iphone 12 mini.jpg">iPhone 12 Mini</option>
+                                    <option value="img/samsung galaxy s24 ultra.jpg">Samsung S24 Ultra</option>
+                                    <option value="img/samsung s23.webp">Samsung S23</option>
+                                    <option value="img/samsung flip 5.jpg">Samsung Flip 5</option>
+                                    <option value="img/xiaomi 14 ultra.jpg">Xiaomi 14 Ultra</option>
+                                    <option value="img/xiaomi redmi 13.jpg">Xiaomi Redmi 13</option>
+                                    <option value="img/xiaomi 13t pro.jpg">Xiaomi 13T Pro</option>
+                                    <option value="img/realme gt3.jpg">Realme GT3</option>
+                                    <option value="img/realme-11.webp">Realme 11 Pro</option>
+                                    <option value="img/oneplus 12.webp">OnePlus 12</option>
+                                    <option value="img/oneplus 11.webp">OnePlus 11</option>
+                                    <option value="img/pixel 8 pro.jpeg">Pixel 8 Pro</option>
+                                    <option value="img/magic-6-pro.webp">Honor Magic 6</option>
+                                    <option value="img/honor 90.jpg">Honor 90</option>
+                                    <option value="img/poco x6 pro.webp">Poco X6 Pro</option>
+                                    <option value="img/poco f5.jpg">Poco F5</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="prodDescription">Описание и особенности</label>
+                            <textarea id="prodDescription" class="admin-input admin-textarea" rows="3" placeholder="Краткое описание флагманских возможностей смартфона, камеры, процессора..."></textarea>
+                        </div>
+
+                        <!-- Предпросмотр карточки -->
+                        <div class="preview-box">
+                            <span class="preview-label">Предпросмотр карточки в каталоге:</span>
+                            <div class="card preview-card" id="cardPreview">
+                                <img id="prevImg" src="img/iPhone 15 pro max.jpg" alt="Preview">
+                                <h3 id="prevName">Название модели</h3>
+                                <div class="specs" id="prevSpecs">6.7" • 8/256 ГБ<br>5000 мАч • Черный</div>
+                                <div class="price" id="prevPrice">0 сом</div>
+                                <button type="button">В корзину</button>
+                            </div>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="submit" id="saveProductBtn" class="admin-btn admin-btn-primary">Сохранить телефон</button>
+                            <button type="button" class="admin-btn admin-btn-secondary" onclick="resetForm()">Очистить форму</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Таблица товаров в каталоге -->
+                <div class="admin-table-panel">
+                    <div class="panel-header">
+                        <h3>📋 Список телефонов в каталоге</h3>
+                        <div class="table-actions-header">
+                            <input type="text" id="adminSearchInput" class="admin-input-small" placeholder="🔍 Поиск модели..." oninput="filterAdminProducts()">
+                        </div>
+                    </div>
+
+                    <div class="admin-table-wrapper">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>Фото</th>
+                                    <th>Название / Бренд</th>
+                                    <th>Память</th>
+                                    <th>Цена</th>
+                                    <th>Действия</th>
+                                </tr>
+                            </thead>
+                            <tbody id="adminProductsTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==========================================
+             ВКЛАДКА 2: Управление Брендами (CRUD)
+             ========================================== -->
+        <div class="admin-tab-content" id="tabContentBrands">
+            <div class="admin-layout">
+                <!-- Форма добавления / редактирования бренда -->
+                <div class="admin-form-panel">
+                    <div class="panel-header">
+                        <h3 id="brandFormTitle">➕ Добавить новый бренд</h3>
+                        <button type="button" id="cancelBrandEditBtn" class="btn-text-small" style="display: none;" onclick="cancelBrandEditing()">Отмена</button>
+                    </div>
+
+                    <form id="brandForm" onsubmit="handleBrandFormSubmit(event)">
+                        <input type="hidden" id="editBrandId" value="">
+
+                        <div class="form-group">
+                            <label for="brandName">Название бренда *</label>
+                            <input type="text" id="brandName" class="admin-input" placeholder="Например: Asus, Sony, Nothing" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="brandCountry">Страна производства *</label>
+                            <input type="text" id="brandCountry" class="admin-input" placeholder="Например: Тайвань, Япония, США" required>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="submit" id="saveBrandBtn" class="admin-btn admin-btn-primary">Сохранить бренд</button>
+                            <button type="button" class="admin-btn admin-btn-secondary" onclick="resetBrandForm()">Очистить форму</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Список брендов -->
+                <div class="admin-table-panel">
+                    <div class="panel-header">
+                        <h3>🏷️ Все бренды в магазине</h3>
+                        <span style="font-size: 13px; color: var(--muted);">Всего: <b id="brandsListCount">0</b></span>
+                    </div>
+
+                    <div class="brands-grid" id="adminBrandsGrid">
+                        <!-- Заполняется динамически -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Модульные скрипты -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/config.js"></script>
+    <script src="js/products-data.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/cart.js"></script>
+    <script src="js/admin.js"></script>
+    <script src="js/main.js"></script>
+</body>
+
+</html>
