@@ -104,7 +104,7 @@ ${order.items.map(i => `- ${i.name} (x${i.qty})`).join('\n')}
             updatedItems[0] = {
                 ...updatedItems[0],
                 _tg_msg_id: msgId,
-                _tracked_status: 'В работе'
+                _tracked_status: 'В обработке'
             };
             if (supabaseClient) {
                 await supabaseClient
@@ -245,7 +245,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         date: new Date().toLocaleString('ru-RU'),
                         total: cart.reduce((s, i) => s + i.price * i.qty, 0),
                         items: cart,
-                        status: 'В работе',
+                        status: 'В обработке',
                         customer_name: name,
                         customer_phone: phone,
                         customer_address: address

@@ -98,9 +98,9 @@ function calculateProductRating(productId) {
     const list = getProductReviews(productId);
     if (list.length === 0) {
         return {
-            avg: 5.0,
+            avg: 0,
             count: 0,
-            stars: '⭐⭐⭐⭐⭐',
+            stars: '',
             hasReviews: false
         };
     }
@@ -114,6 +114,27 @@ function calculateProductRating(productId) {
         stars: stars,
         hasReviews: true
     };
+}
+
+function renderTopRatingHTML(ratingInfo, inStock) {
+    if (!ratingInfo.hasReviews) {
+        return `
+            <span class="no-reviews-pill" style="color: var(--muted); font-size: 13px; display: inline-flex; align-items: center; gap: 6px;">
+                💬 Пока нет отзывов (будьте первым!)
+            </span>
+            <span class="stock-status ${inStock ? 'in-stock' : 'out-of-stock'}">
+                ${inStock ? '● В наличии' : '● Нет в наличии'}
+            </span>
+        `;
+    }
+    return `
+        <span class="stars">${ratingInfo.stars}</span>
+        <span class="rating-val">${ratingInfo.avg.toFixed(1)}</span>
+        <span class="reviews-count">(${ratingInfo.count} ${getReviewsWord(ratingInfo.count)})</span>
+        <span class="stock-status ${inStock ? 'in-stock' : 'out-of-stock'}">
+            ${inStock ? '● В наличии' : '● Нет в наличии'}
+        </span>
+    `;
 }
 
 function getReviewsWord(n) {
@@ -182,17 +203,11 @@ async function initProductPage() {
 
             <!-- Реальный рейтинг и реальный статус наличия -->
             <div class="product-rating" id="productTopRating" onclick="scrollToReviews()" style="cursor: pointer;" title="Посмотреть отзывы">
-                <span class="stars">${ratingInfo.stars}</span>
-                <span class="rating-val">${ratingInfo.hasReviews ? ratingInfo.avg.toFixed(1) : '5.0'}</span>
-                <span class="reviews-count">(${ratingInfo.count} ${getReviewsWord(ratingInfo.count)})</span>
-                <span class="stock-status ${inStock ? 'in-stock' : 'out-of-stock'}">
-                    ${inStock ? '● В наличии' : '● Нет в наличии'}
-                </span>
+                ${renderTopRatingHTML(ratingInfo, inStock)}
             </div>
 
             <div class="product-price-box">
                 <div class="product-price">${product.price.toLocaleString()} сом</div>
-                <div class="product-old-price">${Math.round(product.price * 1.15).toLocaleString()} сом</div>
             </div>
 
             <div class="product-specs-grid">
@@ -269,11 +284,19 @@ function renderReviewsSection(productId) {
     container.innerHTML = `
         <div class="reviews-header-block">
             <div class="reviews-header-left">
-                <div class="reviews-big-score">${ratingInfo.hasReviews ? ratingInfo.avg.toFixed(1) : '5.0'}</div>
-                <div>
-                    <div class="reviews-stars-display">${ratingInfo.stars}</div>
-                    <div class="reviews-total-text">Рейтинг на основе ${ratingInfo.count} ${getReviewsWord(ratingInfo.count)}</div>
-                </div>
+                ${ratingInfo.hasReviews ? `
+                    <div class="reviews-big-score">${ratingInfo.avg.toFixed(1)}</div>
+                    <div>
+                        <div class="reviews-stars-display">${ratingInfo.stars}</div>
+                        <div class="reviews-total-text">Рейтинг на основе ${ratingInfo.count} ${getReviewsWord(ratingInfo.count)}</div>
+                    </div>
+                ` : `
+                    <div class="reviews-big-score" style="font-size: 28px; color: var(--muted);">—</div>
+                    <div>
+                        <div style="font-size: 16px; font-weight: 700; color: var(--text);">Пока нет оценок</div>
+                        <div class="reviews-total-text">У этого смартфона ещё нет отзывов. Станьте первым!</div>
+                    </div>
+                `}
             </div>
             <button class="btn-open-review-form" onclick="toggleReviewForm()">
                 ✍️ Написать отзыв
@@ -430,14 +453,7 @@ async function submitReview(e) {
     const ratingInfo = calculateProductRating(currentProductId);
     const topRating = document.getElementById('productTopRating');
     if (topRating) {
-        topRating.innerHTML = `
-            <span class="stars">${ratingInfo.stars}</span>
-            <span class="rating-val">${ratingInfo.avg.toFixed(1)}</span>
-            <span class="reviews-count">(${ratingInfo.count} ${getReviewsWord(ratingInfo.count)})</span>
-            <span class="stock-status ${inStock ? 'in-stock' : 'out-of-stock'}">
-                ${inStock ? '● В наличии' : '● Нет в наличии'}
-            </span>
-        `;
+        topRating.innerHTML = renderTopRatingHTML(ratingInfo, inStock);
     }
 }
 

@@ -25,11 +25,14 @@ async function loadOrdersFunc() {
 
         ordersListEl.innerHTML = '';
         orders.forEach(o => {
-            const statusText = o.status || 'В работе';
-            let statusClass = 'status-processing';
-            let statusIcon = '🔨';
+            const statusText = o.status || 'В обработке';
+            let statusClass = 'status-pending';
+            let statusIcon = '⏳';
 
-            if (statusText === 'Доставлен') {
+            if (statusText === 'В работе') {
+                statusClass = 'status-processing';
+                statusIcon = '🔨';
+            } else if (statusText === 'Доставлен') {
                 statusClass = 'status-delivered';
                 statusIcon = '✅';
             } else if (statusText === 'Возврат') {
@@ -53,14 +56,19 @@ async function loadOrdersFunc() {
                     </div>
                 </div>
 
-                <!-- Визуальный трекер этапа заказа -->
+                <!-- Визуальный трекер этапа заказа (Оформлен ➔ В обработке ➔ В работе ➔ Доставлен/Возврат) -->
                 <div class="order-tracker">
                     <div class="tracker-step active">
                         <span class="tracker-dot"></span>
                         <span class="tracker-label">Оформлен</span>
                     </div>
-                    <div class="tracker-line ${statusText !== 'В сборке' ? 'active' : ''}"></div>
+                    <div class="tracker-line ${statusText !== 'Отменен' ? 'active' : ''}"></div>
                     <div class="tracker-step ${statusText !== 'Отменен' ? 'active' : ''}">
+                        <span class="tracker-dot"></span>
+                        <span class="tracker-label">В обработке</span>
+                    </div>
+                    <div class="tracker-line ${statusText === 'В работе' || statusText === 'Доставлен' || statusText === 'Возврат' ? 'active' : ''}"></div>
+                    <div class="tracker-step ${statusText === 'В работе' || statusText === 'Доставлен' || statusText === 'Возврат' ? 'active' : ''}">
                         <span class="tracker-dot"></span>
                         <span class="tracker-label">В работе</span>
                     </div>

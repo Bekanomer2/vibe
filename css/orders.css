@@ -74,6 +74,12 @@
     gap: 6px;
 }
 
+.status-pending {
+    background: rgba(245, 158, 11, 0.15);
+    color: var(--warning);
+    border: 1px solid rgba(245, 158, 11, 0.35);
+}
+
 .status-processing {
     background: rgba(56, 189, 248, 0.15);
     color: var(--accent);

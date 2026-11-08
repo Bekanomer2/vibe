@@ -55,7 +55,10 @@ function updateOrdersStats() {
 
     const total = allOrdersList.length;
     const revenue = allOrdersList.reduce((s, o) => s + (o.total || 0), 0);
-    const processing = allOrdersList.filter(o => (o.status || 'В работе') === 'В работе').length;
+    const processing = allOrdersList.filter(o => {
+        const s = o.status || 'В обработке';
+        return s === 'В обработке' || s === 'В работе';
+    }).length;
     const returns = allOrdersList.filter(o => o.status === 'Возврат').length;
 
     totalCountEl.textContent = total;
@@ -120,11 +123,14 @@ function renderAdminOrdersList(orders) {
     container.innerHTML = '';
 
     orders.forEach(o => {
-        const statusText = o.status || 'В работе';
-        let statusClass = 'status-processing';
-        let statusIcon = '🔨';
+        const statusText = o.status || 'В обработке';
+        let statusClass = 'status-pending';
+        let statusIcon = '⏳';
 
-        if (statusText === 'Доставлен') {
+        if (statusText === 'В работе') {
+            statusClass = 'status-processing';
+            statusIcon = '🔨';
+        } else if (statusText === 'Доставлен') {
             statusClass = 'status-delivered';
             statusIcon = '✅';
         } else if (statusText === 'Возврат') {
@@ -166,6 +172,7 @@ function renderAdminOrdersList(orders) {
                 <div class="admin-order-status-change-box">
                     <div style="font-size:11px; text-transform:uppercase; letter-spacing:0.5px; color:var(--muted); font-weight:700; margin-bottom:6px;">Сменить статус заказа:</div>
                     <select class="admin-status-select" onchange="changeOrderStatusFromAdmin(${o.id}, this.value)">
+                        <option value="В обработке" ${statusText === 'В обработке' ? 'selected' : ''}>⏳ В обработке</option>
                         <option value="В работе" ${statusText === 'В работе' ? 'selected' : ''}>🔨 В работе</option>
                         <option value="Доставлен" ${statusText === 'Доставлен' ? 'selected' : ''}>✅ Доставлен</option>
                         <option value="Возврат" ${statusText === 'Возврат' ? 'selected' : ''}>🔄 Возврат</option>

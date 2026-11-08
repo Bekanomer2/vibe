@@ -46,17 +46,20 @@ function showToast(msg, type = 'success') {
 
 // Returns the allowed inline buttons in Telegram based on current order status
 function getTelegramReplyMarkupForStatus(globalOrderId, status) {
-    const st = status || 'В работе';
+    const st = status || 'В обработке';
 
-    if (st === 'В работе') {
+    if (st === 'В обработке' || st === 'В работе') {
         return {
             inline_keyboard: [
                 [
-                    { text: '🔨 В работу', callback_data: `status:${globalOrderId}:В работе` },
-                    { text: '✅ Доставлен', callback_data: `status:${globalOrderId}:Доставлен` }
+                    { text: '⏳ В обработке', callback_data: `status:${globalOrderId}:В обработке` },
+                    { text: '🔨 В работу', callback_data: `status:${globalOrderId}:В работе` }
                 ],
                 [
-                    { text: '🔄 Возврат', callback_data: `status:${globalOrderId}:Возврат` },
+                    { text: '✅ Доставлен', callback_data: `status:${globalOrderId}:Доставлен` },
+                    { text: '🔄 Возврат', callback_data: `status:${globalOrderId}:Возврат` }
+                ],
+                [
                     { text: '❌ Отменить', callback_data: `status:${globalOrderId}:Отменен` }
                 ]
             ]
@@ -122,7 +125,7 @@ async function sendTelegramAlertMessage(text) {
 // - From "Возврат" or "Отменен": cannot be changed via Telegram (only Admin on website can override)
 function isTelegramTransitionAllowed(oldStatus, newStatus) {
     if (oldStatus === newStatus) return true;
-    if (oldStatus === 'В работе') return true;
+    if (oldStatus === 'В обработке' || oldStatus === 'В работе') return true;
     if (oldStatus === 'Доставлен') {
         return newStatus === 'Возврат';
     }
