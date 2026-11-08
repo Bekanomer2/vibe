@@ -72,7 +72,7 @@ ${order.items.map(i => `- ${i.name} (x${i.qty})`).join('\n')}
 
     try {
         const replyMarkup = typeof getTelegramReplyMarkupForStatus === 'function'
-            ? getTelegramReplyMarkupForStatus(order.global_id, 'В работе')
+            ? getTelegramReplyMarkupForStatus(order.global_id, 'В обработке')
             : {
                 inline_keyboard: [
                     [
