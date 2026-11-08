@@ -71,11 +71,12 @@ function renderAdminProductsTable(filterQuery = '') {
     const list = productsData.filter(p => p.name.toLowerCase().includes(q) || p.brand.toLowerCase().includes(q));
 
     if (list.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--muted); padding: 30px;">Смартфоны не найдены</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--muted); padding: 30px;">Смартфоны не найдены</td></tr>';
         return;
     }
 
     list.forEach(p => {
+        const inStock = p.inStock !== false;
         const tr = document.createElement('tr');
         tr.innerHTML = `
             <td><img src="${p.img}" class="admin-table-thumb" alt="${p.name}" onerror="this.src='img/logo.png'"></td>
@@ -86,6 +87,11 @@ function renderAdminProductsTable(filterQuery = '') {
             <td>${p.ram} / ${p.storage} ГБ</td>
             <td><b>${p.price.toLocaleString()} сом</b></td>
             <td>
+                <button type="button" onclick="toggleProductStock(${p.id})" title="Нажмите, чтобы переключить наличие" style="background: ${inStock ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)'}; color: ${inStock ? 'var(--success)' : '#ef4444'}; border: 1px solid ${inStock ? 'rgba(16, 185, 129, 0.35)' : 'rgba(239, 68, 68, 0.35)'}; padding: 5px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; cursor: pointer; white-space: nowrap;">
+                    ${inStock ? '● В наличии' : '● Нет в наличии'}
+                </button>
+            </td>
+            <td>
                 <div class="admin-table-actions">
                     <button class="btn-action-edit" onclick="editProductInAdmin(${p.id})">✏️ Редакт.</button>
                     <button class="btn-action-delete" onclick="deleteProductInAdmin(${p.id})">🗑️</button>
@@ -94,6 +100,22 @@ function renderAdminProductsTable(filterQuery = '') {
         `;
         tbody.appendChild(tr);
     });
+}
+
+function toggleProductStock(id) {
+    if (!isAdmin(currentUser)) {
+        showToast('Только администратор может менять наличие!', 'error');
+        return;
+    }
+    const idx = productsData.findIndex(p => p.id === id);
+    if (idx > -1) {
+        const currentStock = productsData[idx].inStock !== false;
+        productsData[idx].inStock = !currentStock;
+        saveProductsData(productsData);
+        const statusLabel = productsData[idx].inStock ? 'В наличии' : 'Нет в наличии';
+        showToast(`${productsData[idx].name}: статус изменен на "${statusLabel}"`, 'info');
+        filterAdminProducts();
+    }
 }
 
 function filterAdminProducts() {
@@ -118,16 +140,27 @@ function updateLivePreview() {
     const battery = document.getElementById('prodBattery')?.value || 5000;
     const color = document.getElementById('prodColor')?.value || 'Цвет';
     const img = document.getElementById('prodImg')?.value || 'img/iPhone 15 pro max.jpg';
+    const inStock = document.getElementById('prodInStock')?.value !== 'false';
 
     const prevName = document.getElementById('prevName');
     const prevPrice = document.getElementById('prevPrice');
     const prevSpecs = document.getElementById('prevSpecs');
     const prevImg = document.getElementById('prevImg');
+    const prevStock = document.getElementById('prevStock');
+    const prevBtn = document.getElementById('prevBtn');
 
     if (prevName) prevName.textContent = name;
     if (prevPrice) prevPrice.textContent = `${parseInt(price || 0).toLocaleString()} сом`;
     if (prevSpecs) prevSpecs.innerHTML = `${display} • ${ram}/${storage} ГБ<br>${battery} мАч • ${color}`;
     if (prevImg) prevImg.src = img;
+    if (prevStock) {
+        prevStock.className = `card-stock ${inStock ? 'in-stock' : 'out-of-stock'}`;
+        prevStock.textContent = inStock ? '● В наличии' : '● Нет в наличии';
+    }
+    if (prevBtn) {
+        prevBtn.textContent = inStock ? 'В корзину' : 'Нет в наличии';
+        prevBtn.disabled = !inStock;
+    }
 }
 
 // CREATE & UPDATE Phone
@@ -143,6 +176,7 @@ function handleProductFormSubmit(e) {
     const brand = document.getElementById('prodBrand').value.trim();
     const price = parseInt(document.getElementById('prodPrice').value);
     const color = document.getElementById('prodColor').value.trim();
+    const inStock = document.getElementById('prodInStock') ? document.getElementById('prodInStock').value !== 'false' : true;
     const ram = parseInt(document.getElementById('prodRam').value);
     const storage = parseInt(document.getElementById('prodStorage').value);
     const display = document.getElementById('prodDisplay').value.trim();
@@ -157,7 +191,7 @@ function handleProductFormSubmit(e) {
         if (idx > -1) {
             productsData[idx] = {
                 ...productsData[idx],
-                name, brand, price, color, ram, storage, display, battery, img, description
+                name, brand, price, color, inStock, ram, storage, display, battery, img, description
             };
             saveProductsData(productsData);
             showToast(`Телефон "${name}" успешно обновлен!`, 'success');
@@ -167,7 +201,7 @@ function handleProductFormSubmit(e) {
         const newId = productsData.length > 0 ? Math.max(...productsData.map(p => p.id)) + 1 : 1;
         const newProduct = {
             id: newId,
-            name, brand, price, color, ram, storage, display, battery, img, description
+            name, brand, price, color, inStock, ram, storage, display, battery, img, description
         };
         productsData.unshift(newProduct);
         saveProductsData(productsData);
@@ -187,6 +221,9 @@ function editProductInAdmin(id) {
     populateBrandSelect(p.brand);
     document.getElementById('prodPrice').value = p.price;
     document.getElementById('prodColor').value = p.color;
+    if (document.getElementById('prodInStock')) {
+        document.getElementById('prodInStock').value = p.inStock !== false ? 'true' : 'false';
+    }
     document.getElementById('prodRam').value = p.ram;
     document.getElementById('prodStorage').value = p.storage;
     document.getElementById('prodDisplay').value = p.display;
@@ -210,6 +247,9 @@ function resetForm() {
     const form = document.getElementById('productForm');
     if (form) form.reset();
     document.getElementById('editProductId').value = '';
+    if (document.getElementById('prodInStock')) {
+        document.getElementById('prodInStock').value = 'true';
+    }
     document.getElementById('formTitle').textContent = '➕ Добавить новый телефон';
     document.getElementById('saveProductBtn').textContent = 'Сохранить телефон';
     document.getElementById('cancelEditBtn').style.display = 'none';

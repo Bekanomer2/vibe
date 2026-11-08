@@ -76,25 +76,36 @@ const PRODUCTS_STORAGE_KEY = 'ez_custom_products';
 const BRANDS_STORAGE_KEY = 'ez_custom_brands';
 
 // Products Storage
+function normalizeProducts(list) {
+    return list.map(p => ({
+        ...p,
+        inStock: p.inStock !== false
+    }));
+}
+
 function getProductsData() {
     try {
         const stored = localStorage.getItem(PRODUCTS_STORAGE_KEY);
         if (stored) {
             const parsed = JSON.parse(stored);
             if (Array.isArray(parsed) && parsed.length > 0) {
-                return parsed;
+                return normalizeProducts(parsed);
             }
         }
     } catch (e) {
         console.warn('Error reading products from storage:', e);
     }
-    return [...initialProductsData];
+    return normalizeProducts([...initialProductsData]);
 }
 
-function saveProductsData(products) {
+function saveProductsData(products, syncCloud = true) {
     try {
-        localStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify(products));
-        productsData = products;
+        const normalized = normalizeProducts(products);
+        localStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify(normalized));
+        productsData = normalized;
+        if (syncCloud) {
+            saveCatalogToSupabase();
+        }
     } catch (e) {
         console.error('Error saving products:', e);
     }
@@ -107,7 +118,6 @@ function getBrandsData() {
         if (stored) {
             const parsed = JSON.parse(stored);
             if (Array.isArray(parsed) && parsed.length > 0) {
-                // Ensure no leftover logo field
                 return parsed.map(b => ({ id: b.id, name: b.name, country: b.country }));
             }
         }
@@ -117,12 +127,85 @@ function getBrandsData() {
     return [...initialBrandsData];
 }
 
-function saveBrandsData(brands) {
+function saveBrandsData(brands, syncCloud = true) {
     try {
         localStorage.setItem(BRANDS_STORAGE_KEY, JSON.stringify(brands));
         brandsData = brands;
+        if (syncCloud) {
+            saveCatalogToSupabase();
+        }
     } catch (e) {
         console.error('Error saving brands:', e);
+    }
+}
+
+// Cloud Synchronization via Supabase (so all devices see Admin stock & catalog updates)
+async function saveCatalogToSupabase() {
+    if (!supabaseClient || !currentUser) return;
+    try {
+        const payload = [{
+            type: 'catalog_sync',
+            products: productsData,
+            brands: brandsData,
+            updatedAt: Date.now()
+        }];
+
+        const { data: existing } = await supabaseClient
+            .from('orders')
+            .select('id')
+            .eq('status', '__CATALOG_SYNC__')
+            .order('id', { ascending: false })
+            .limit(1);
+
+        if (existing && existing.length > 0) {
+            await supabaseClient
+                .from('orders')
+                .update({
+                    items: payload,
+                    date: new Date().toLocaleString('ru-RU')
+                })
+                .eq('id', existing[0].id);
+        } else {
+            await supabaseClient
+                .from('orders')
+                .insert({
+                    user_id: currentUser.id,
+                    user_order_id: 0,
+                    date: new Date().toLocaleString('ru-RU'),
+                    total: 0,
+                    items: payload,
+                    status: '__CATALOG_SYNC__',
+                    customer_name: 'SystemCatalogSync',
+                    customer_phone: '0',
+                    customer_address: 'system'
+                });
+        }
+    } catch (err) {
+        console.warn('Cloud catalog sync error:', err);
+    }
+}
+
+async function syncCatalogWithSupabase() {
+    if (!supabaseClient) return;
+    try {
+        const { data, error } = await supabaseClient
+            .from('orders')
+            .select('items')
+            .eq('status', '__CATALOG_SYNC__')
+            .order('id', { ascending: false })
+            .limit(1);
+
+        if (error || !data || data.length === 0) return;
+
+        const syncItem = Array.isArray(data[0].items) ? data[0].items[0] : data[0].items;
+        if (syncItem && Array.isArray(syncItem.products) && syncItem.products.length > 0) {
+            saveProductsData(syncItem.products, false);
+        }
+        if (syncItem && Array.isArray(syncItem.brands) && syncItem.brands.length > 0) {
+            saveBrandsData(syncItem.brands, false);
+        }
+    } catch (err) {
+        console.warn('Could not load catalog from Supabase:', err);
     }
 }
 

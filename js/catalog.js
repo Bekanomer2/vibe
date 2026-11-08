@@ -6,7 +6,6 @@ const productsEl = document.getElementById('products');
 
 function renderProducts(list) {
     if (!productsEl) return;
-    productsEl.innerHTML = '';
 
     const countEl = document.getElementById('productsCount');
     if (countEl) countEl.textContent = list.length;
@@ -21,7 +20,10 @@ function renderProducts(list) {
         return;
     }
 
+    const fragment = document.createDocumentFragment();
+
     list.forEach(p => {
+        const inStock = p.inStock !== false;
         const c = document.createElement('div');
         c.className = 'card';
         c.innerHTML = `
@@ -30,29 +32,44 @@ function renderProducts(list) {
                 <button class="btn-fav" data-id="${p.id}" onclick="toggleFavorite(${p.id}, event)" title="В избранное">🤍</button>
             </div>
             <a href="product.html?id=${p.id}" class="card-img-link">
-                <img src="${p.img}" alt="${p.name}" loading="lazy">
+                <img src="${p.img}" alt="${p.name}" loading="lazy" ${!inStock ? 'style="opacity: 0.65;"' : ''}>
             </a>
-            <a href="product.html?id=${p.id}" class="card-title-link">
-                <h3>${p.name}</h3>
-            </a>
+            <div style="display: flex; justify-content: space-between; align-items: center; gap: 6px;">
+                <a href="product.html?id=${p.id}" class="card-title-link">
+                    <h3>${p.name}</h3>
+                </a>
+            </div>
+            <div class="card-stock ${inStock ? 'in-stock' : 'out-of-stock'}">
+                ${inStock ? '● В наличии' : '● Нет в наличии'}
+            </div>
             <div class="specs">
                 ${p.display} • ${p.ram}/${p.storage} ГБ<br>
                 ${p.battery} мАч • ${p.color}
             </div>
             <div class="price">${p.price.toLocaleString()} сом</div>
             <div class="card-actions">
-                <button class="btn-add-cart" onclick="addToCart(productsData.find(x => x.id === ${p.id}))">В корзину</button>
+                ${inStock
+                    ? `<button class="btn-add-cart" onclick="addToCart(productsData.find(x => x.id === ${p.id}))">В корзину</button>`
+                    : `<button class="btn-add-cart" disabled>Нет в наличии</button>`
+                }
                 <a href="product.html?id=${p.id}" class="btn-details" title="Подробнее">Инфо</a>
             </div>
         `;
-        productsEl.appendChild(c);
+        fragment.appendChild(c);
     });
+
+    productsEl.replaceChildren(fragment);
 
     if (typeof updateFavoritesUI === 'function') updateFavoritesUI();
     if (typeof updateCompareBar === 'function') updateCompareBar();
 }
 
 function renderFilters() {
+    // Preserve any currently checked values before re-rendering
+    const prevBrands = Array.from(document.querySelectorAll('#brandFilters input:checked')).map(cb => cb.value);
+    const prevRam = Array.from(document.querySelectorAll('#ramFilters input:checked')).map(cb => cb.value);
+    const prevStorage = Array.from(document.querySelectorAll('#storageFilters input:checked')).map(cb => cb.value);
+
     // Dynamic brands from brandsData + any extra from productsData
     const allBrandNames = [...new Set([
         ...brandsData.map(b => b.name),
@@ -69,7 +86,7 @@ function renderFilters() {
     if (brandContainer) {
         brandContainer.innerHTML = allBrandNames.map(b => `
             <label class="checkbox-label">
-                <input type="checkbox" value="${b}" onchange="applyFilters()"> ${b}
+                <input type="checkbox" value="${b}" ${prevBrands.includes(b) ? 'checked' : ''} onchange="applyFilters(true)"> ${b}
             </label>
         `).join('');
     }
@@ -77,7 +94,7 @@ function renderFilters() {
     if (ramContainer) {
         ramContainer.innerHTML = rams.map(r => `
             <label class="checkbox-label">
-                <input type="checkbox" value="${r}" onchange="applyFilters()"> ${r} ГБ
+                <input type="checkbox" value="${r}" ${prevRam.includes(String(r)) ? 'checked' : ''} onchange="applyFilters(true)"> ${r} ГБ
             </label>
         `).join('');
     }
@@ -85,13 +102,13 @@ function renderFilters() {
     if (storageContainer) {
         storageContainer.innerHTML = storages.map(s => `
             <label class="checkbox-label">
-                <input type="checkbox" value="${s}" onchange="applyFilters()"> ${s} ГБ
+                <input type="checkbox" value="${s}" ${prevStorage.includes(String(s)) ? 'checked' : ''} onchange="applyFilters(true)"> ${s} ГБ
             </label>
         `).join('');
     }
 }
 
-function applyFilters() {
+function applyFilters(shouldScroll = true) {
     const search = document.getElementById('search');
     const sort = document.getElementById('sort');
     const minPrice = document.getElementById('minPrice');
@@ -118,6 +135,12 @@ function applyFilters() {
         list = list.filter(p => selectedStorage.includes(p.storage));
     }
 
+    // Filter only in stock
+    const onlyInStock = document.getElementById('onlyInStockCheck')?.checked;
+    if (onlyInStock) {
+        list = list.filter(p => p.inStock !== false);
+    }
+
     // Filter only favorites
     const onlyFav = document.getElementById('onlyFavoritesCheck')?.checked;
     if (onlyFav) {
@@ -131,6 +154,12 @@ function applyFilters() {
     if (sort.value === 'price_desc') list.sort((a, b) => b.price - a.price);
 
     list = list.filter(p => p.price >= min && p.price <= max && (p.name.toLowerCase().includes(q) || p.brand.toLowerCase().includes(q)));
+
+    // Prevent browser clamping scroll to the bottom footer when filtered list shrinks
+    if (shouldScroll && window.innerWidth > 768 && window.scrollY > 160) {
+        window.scrollTo({ top: 0, behavior: 'instant' });
+    }
+
     renderProducts(list);
 }
 
@@ -146,7 +175,7 @@ function resetAllFilters() {
     if (maxPrice) maxPrice.value = '';
 
     document.querySelectorAll('.sidebar input[type="checkbox"]').forEach(cb => cb.checked = false);
-    applyFilters();
+    applyFilters(true);
     showToast('Фильтры сброшены', 'info');
 }
 

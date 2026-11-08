@@ -96,11 +96,14 @@ function renderFavoritesModalContent() {
                     <img src="${p.img}" alt="${p.name}" class="fav-thumb">
                     <div class="fav-info">
                         <h4>${p.name}</h4>
-                        <div class="fav-specs">${p.ram}/${p.storage} ГБ • ${p.color}</div>
+                        <div class="fav-specs">${p.ram}/${p.storage} ГБ • ${p.color} • ${p.inStock !== false ? '<span style="color:var(--success)">В наличии</span>' : '<span style="color:#ef4444">Нет в наличии</span>'}</div>
                         <div class="fav-price">${p.price.toLocaleString()} сом</div>
                     </div>
                     <div class="fav-actions">
-                        <button class="auth-btn" style="padding: 8px 14px; font-size: 13px;" onclick="addToCart(productsData.find(x => x.id === ${p.id}))">В корзину</button>
+                        ${p.inStock !== false
+                            ? `<button class="auth-btn" style="padding: 8px 14px; font-size: 13px;" onclick="addToCart(productsData.find(x => x.id === ${p.id}))">В корзину</button>`
+                            : `<button class="auth-btn" style="padding: 8px 14px; font-size: 13px; background: #334155; color: #94a3b8; cursor: not-allowed;" disabled>Нет в наличии</button>`
+                        }
                         <button class="btn-fav-remove" onclick="toggleFavorite(${p.id})">✕ Убрать</button>
                     </div>
                 </div>

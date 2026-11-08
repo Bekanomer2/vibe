@@ -30,7 +30,7 @@ async function loadAllOrdersFromDB() {
 
         if (error) throw error;
 
-        allOrdersList = orders || [];
+        allOrdersList = (orders || []).filter(o => !String(o.status || '').startsWith('__'));
         updateOrdersStats();
         filterAdminOrders();
     } catch (err) {
@@ -162,7 +162,7 @@ function renderAdminOrdersList(orders) {
                     <div><b>📍 Адрес:</b> ${o.customer_address || 'Самовывоз / Не указан'}</div>
                 </div>
 
-                <!-- Управление статусом прямо из карточки -->
+                <!-- Управление статусом прямо из карточки (Администратор может выставить любой статус) -->
                 <div class="admin-order-status-change-box">
                     <div style="font-size:11px; text-transform:uppercase; letter-spacing:0.5px; color:var(--muted); font-weight:700; margin-bottom:6px;">Сменить статус заказа:</div>
                     <select class="admin-status-select" onchange="changeOrderStatusFromAdmin(${o.id}, this.value)">
@@ -201,22 +201,56 @@ async function changeOrderStatusFromAdmin(orderId, newStatus) {
         return;
     }
 
+    const target = allOrdersList.find(o => o.id === orderId);
+    if (!target) return;
+    if ((target.status || 'В работе') === newStatus) return;
+
     try {
+        // Подготавливаем обновленные items с новым _tracked_status для синхронизации с Telegram
+        let updatedItems = Array.isArray(target.items) ? [...target.items] : [];
+        let tgMsgId = null;
+
+        if (updatedItems.length > 0) {
+            tgMsgId = updatedItems[0]._tg_msg_id;
+            updatedItems[0] = {
+                ...updatedItems[0],
+                _tracked_status: newStatus
+            };
+        }
+
+        const updatePayload = {
+            status: newStatus
+        };
+        if (updatedItems.length > 0) {
+            updatePayload.items = updatedItems;
+        }
+
         const { error } = await supabaseClient
             .from('orders')
-            .update({ status: newStatus })
+            .update(updatePayload)
             .eq('id', orderId);
 
         if (error) throw error;
 
         // Обновляем локальный кеш
-        const target = allOrdersList.find(o => o.id === orderId);
-        if (target) target.status = newStatus;
+        target.status = newStatus;
+        if (updatedItems.length > 0) {
+            target.items = updatedItems;
+        }
+
+        // Обновляем кнопки в самом сообщении Telegram, если есть msgId
+        if (tgMsgId && typeof updateTelegramMessageKeyboard === 'function') {
+            await updateTelegramMessageKeyboard(tgMsgId, orderId, newStatus);
+        }
 
         showToast(`Статус заказа #${orderId} изменен на "${newStatus}"`, 'success');
         updateOrdersStats();
         filterAdminOrders();
     } catch (err) {
+        console.error('Error updating order status:', err);
+        showToast('Ошибка обновления статуса: ' + err.message, 'error');
+    }
+}
         console.error('Error updating order status:', err);
         showToast('Ошибка обновления статуса: ' + err.message, 'error');
     }

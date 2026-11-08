@@ -4,23 +4,40 @@
 .compare-bar {
     position: fixed;
     bottom: 24px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: rgba(15, 23, 42, 0.95);
+    left: 16px;
+    right: 16px;
+    margin: 0 auto;
+    width: fit-content;
+    max-width: calc(100vw - 32px);
+    background: rgba(15, 23, 42, 0.96);
     backdrop-filter: blur(12px);
     border: 1px solid var(--accent);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
     padding: 12px 24px;
     border-radius: 999px;
     z-index: 150;
     display: flex;
     align-items: center;
+    justify-content: center;
 }
 
 .compare-bar-content {
     display: flex;
     align-items: center;
-    gap: 20px;
+    gap: 16px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+@media(max-width: 768px) {
+    .compare-bar {
+        bottom: 84px;
+        border-radius: 18px;
+        padding: 10px 16px;
+    }
+    .compare-bar-content {
+        gap: 10px;
+    }
 }
 
 #compareBarText {

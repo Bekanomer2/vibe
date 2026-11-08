@@ -28,6 +28,8 @@ textarea {
 
 html {
     background: #020617;
+    overflow-x: hidden;
+    max-width: 100%;
 }
 
 body {
@@ -35,6 +37,9 @@ body {
     background-attachment: fixed;
     color: var(--text);
     min-height: 100vh;
+    overflow-x: hidden;
+    max-width: 100%;
+    position: relative;
 }
 
 a {
@@ -47,8 +52,7 @@ header {
     position: sticky;
     top: 0;
     z-index: 200;
-    background: rgba(2, 6, 23, .85);
-    backdrop-filter: blur(12px);
+    background: rgba(2, 6, 23, 0.96);
     display: flex;
     align-items: center;
     justify-content: space-around;
@@ -196,44 +200,52 @@ nav a:hover {
 /* Toast Notifications */
 .toast-container {
     position: fixed;
-    bottom: 24px;
-    left: 50%;
-    transform: translateX(-50%);
+    top: 90px;
+    left: 0;
+    right: 0;
+    width: 100%;
+    padding: 0 16px;
     display: flex;
     flex-direction: column;
+    align-items: center;
     gap: 10px;
-    z-index: 1000;
+    z-index: 2000;
+    pointer-events: none;
 }
 
 .toast {
-    background: rgba(17, 24, 39, 0.95);
+    pointer-events: auto;
+    background: rgba(17, 24, 39, 0.96);
     backdrop-filter: blur(10px);
     color: #fff;
-    padding: 12px 24px;
+    padding: 12px 20px;
     border-radius: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
     font-weight: 500;
+    font-size: 14px;
     display: flex;
     align-items: center;
     gap: 10px;
-    animation: slideUp 0.3s ease-out forwards;
-    min-width: 280px;
+    animation: slideUp 0.25s ease-out forwards;
+    width: auto;
+    max-width: min(420px, calc(100vw - 32px));
     justify-content: center;
+    text-align: center;
 }
 
 .toast.success { border-color: var(--accent); }
 .toast.error { border-color: #ef4444; color: #fca5a5; }
 .toast.info { border-color: #60a5fa; }
-.toast.is-hidden { animation: fadeOut 0.3s ease-in forwards; }
+.toast.is-hidden { animation: fadeOut 0.25s ease-in forwards; }
 
 @keyframes slideUp {
-    from { opacity: 0; transform: translateY(20px); }
+    from { opacity: 0; transform: translateY(-14px); }
     to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes fadeOut {
-    to { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 0; transform: translateY(-14px); }
 }
 
 /* Page Loader */
@@ -322,29 +334,59 @@ footer {
 
 /* Mobile Nav */
 @media(max-width: 768px) {
+    header {
+        justify-content: space-between;
+        padding: 12px 16px;
+    }
+    .logo img {
+        height: 52px;
+    }
     nav {
         position: fixed;
         top: 0;
-        right: -100%;
+        right: 0;
+        transform: translateX(105%);
+        visibility: hidden;
+        opacity: 0;
+        pointer-events: none;
         flex-direction: column;
-        background: rgba(2, 6, 23, 0.98);
-        backdrop-filter: blur(14px);
-        width: 260px;
+        align-items: flex-start;
+        background: #020617;
+        width: min(280px, 82vw);
         height: 100vh;
+        height: 100dvh;
         display: flex;
-        padding: 80px 24px 24px;
+        padding: 80px 24px 28px;
         border-left: 1px solid var(--border);
-        transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease, visibility 0.3s;
         z-index: 250;
-        box-shadow: -5px 0 20px rgba(0, 0, 0, 0.6);
-        gap: 20px;
+        box-shadow: -8px 0 30px rgba(0, 0, 0, 0.85);
+        gap: 18px;
+        overflow-y: auto;
     }
     nav.active {
-        right: 0;
+        transform: translateX(0);
+        visibility: visible;
+        opacity: 1;
+        pointer-events: auto;
+    }
+    .user-panel {
+        flex-direction: column;
+        align-items: flex-start;
+        width: 100%;
+        padding-top: 14px;
+        border-top: 1px solid var(--border);
+        gap: 10px;
+    }
+    .user-panel button {
+        width: 100%;
     }
     .burger {
         display: flex;
         z-index: 300;
         position: relative;
+    }
+    .toast-container {
+        top: 76px;
     }
 }

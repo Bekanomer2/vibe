@@ -94,6 +94,13 @@
                                 <label for="prodColor">Цвет *</label>
                                 <input type="text" id="prodColor" class="admin-input" placeholder="Space Black" required oninput="updateLivePreview()">
                             </div>
+                            <div class="form-group flex-1">
+                                <label for="prodInStock">Статус наличия *</label>
+                                <select id="prodInStock" class="admin-input" onchange="updateLivePreview()">
+                                    <option value="true" selected>✅ В наличии</option>
+                                    <option value="false">❌ Нет в наличии</option>
+                                </select>
+                            </div>
                         </div>
 
                         <div class="form-row">
@@ -171,9 +178,10 @@
                             <div class="card preview-card" id="cardPreview">
                                 <img id="prevImg" src="img/iPhone 15 pro max.jpg" alt="Preview">
                                 <h3 id="prevName">Название модели</h3>
+                                <div class="card-stock in-stock" id="prevStock">● В наличии</div>
                                 <div class="specs" id="prevSpecs">6.7" • 8/256 ГБ<br>5000 мАч • Черный</div>
                                 <div class="price" id="prevPrice">0 сом</div>
-                                <button type="button">В корзину</button>
+                                <button type="button" id="prevBtn">В корзину</button>
                             </div>
                         </div>
 
@@ -201,6 +209,7 @@
                                     <th>Название / Бренд</th>
                                     <th>Память</th>
                                     <th>Цена</th>
+                                    <th>Наличие</th>
                                     <th>Действия</th>
                                 </tr>
                             </thead>

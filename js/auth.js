@@ -118,6 +118,17 @@ async function initAuth() {
     // Update visibility of Admin link in navigation
     updateAdminUI();
 
+    // Sync Catalog & Stock Status from Supabase across devices
+    if (typeof syncCatalogWithSupabase === 'function') {
+        await syncCatalogWithSupabase();
+    }
+
+    // Re-render catalog if on index page
+    if (typeof renderFilters === 'function' && typeof applyFilters === 'function') {
+        renderFilters();
+        applyFilters(false);
+    }
+
     // Load Cart for current user
     if (typeof loadCart === 'function') loadCart();
 
@@ -140,7 +151,12 @@ async function initAuth() {
 
     // Initialize Product Details if on product page
     if (path.includes('product.html') && typeof initProductPage === 'function') {
-        initProductPage();
+        await initProductPage();
+    }
+
+    // Start background Telegram status guard (protects order status rules)
+    if (typeof startTelegramStatusGuard === 'function') {
+        startTelegramStatusGuard();
     }
 
     // Reveal page content

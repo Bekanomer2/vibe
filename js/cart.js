@@ -29,6 +29,10 @@ function updateCartIcon() {
 
 function addToCart(p, qty = 1) {
     if (!p) return;
+    if (p.inStock === false) {
+        showToast('К сожалению, этого товара сейчас нет в наличии', 'error');
+        return;
+    }
     const item = cart.find(i => i.id === p.id);
     if (item) {
         item.qty += qty;
@@ -40,6 +44,11 @@ function addToCart(p, qty = 1) {
 }
 
 function quickBuy(p, qty = 1) {
+    if (!p) return;
+    if (p.inStock === false) {
+        showToast('К сожалению, этого товара сейчас нет в наличии', 'error');
+        return;
+    }
     addToCart(p, qty);
     setTimeout(() => {
         window.location.href = 'cart.html';
@@ -62,27 +71,48 @@ ${order.items.map(i => `- ${i.name} (x${i.qty})`).join('\n')}
     `;
 
     try {
-        await fetch(`https://api.telegram.org/bot${TG_BOT_TOKEN}/sendMessage`, {
+        const replyMarkup = typeof getTelegramReplyMarkupForStatus === 'function'
+            ? getTelegramReplyMarkupForStatus(order.global_id, 'В работе')
+            : {
+                inline_keyboard: [
+                    [
+                        { text: '🔨 В работу', callback_data: `status:${order.global_id}:В работе` },
+                        { text: '✅ Доставлен', callback_data: `status:${order.global_id}:Доставлен` }
+                    ],
+                    [
+                        { text: '🔄 Возврат', callback_data: `status:${order.global_id}:Возврат` },
+                        { text: '❌ Отменить', callback_data: `status:${order.global_id}:Отменен` }
+                    ]
+                ]
+            };
+
+        const res = await fetch(`https://api.telegram.org/bot${TG_BOT_TOKEN}/sendMessage`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 chat_id: TG_CHAT_ID,
                 text: message,
                 parse_mode: 'HTML',
-                reply_markup: {
-                    inline_keyboard: [
-                        [
-                            { text: '🔨 В работу', callback_data: `status:${order.global_id}:В работе` },
-                            { text: '✅ Доставлен', callback_data: `status:${order.global_id}:Доставлен` }
-                        ],
-                        [
-                            { text: '🔄 Возврат', callback_data: `status:${order.global_id}:Возврат` },
-                            { text: '❌ Отменить', callback_data: `status:${order.global_id}:Отменен` }
-                        ]
-                    ]
-                }
+                reply_markup: replyMarkup
             })
         });
+
+        const json = await res.json();
+        if (json && json.ok && json.result && json.result.message_id) {
+            const msgId = json.result.message_id;
+            const updatedItems = [...order.items];
+            updatedItems[0] = {
+                ...updatedItems[0],
+                _tg_msg_id: msgId,
+                _tracked_status: 'В работе'
+            };
+            if (supabaseClient) {
+                await supabaseClient
+                    .from('orders')
+                    .update({ items: updatedItems })
+                    .eq('id', order.global_id);
+            }
+        }
     } catch (err) {
         console.error('Telegram notification error:', err);
     }
@@ -199,11 +229,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Get user order count for user-friendly order ID
                 const { data: userOrders } = await supabaseClient
                     .from('orders')
-                    .select('user_order_id')
+                    .select('user_order_id, status')
                     .eq('user_id', currentUser.id);
 
-                const nextId = (userOrders && userOrders.length > 0)
-                    ? Math.max(...userOrders.map(o => o.user_order_id || 0)) + 1
+                const realUserOrders = (userOrders || []).filter(o => !String(o.status || '').startsWith('__'));
+                const nextId = (realUserOrders.length > 0)
+                    ? Math.max(...realUserOrders.map(o => o.user_order_id || 0)) + 1
                     : 1;
 
                 const { data: orderData, error } = await supabaseClient

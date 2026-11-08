@@ -7,10 +7,26 @@ document.addEventListener('DOMContentLoaded', () => {
     const burger = document.getElementById('burger');
     const nav = document.getElementById('nav');
     if (burger && nav) {
-        burger.onclick = () => {
+        burger.onclick = (e) => {
+            e.stopPropagation();
             nav.classList.toggle('active');
             burger.classList.toggle('active');
         };
+
+        // Close burger menu when clicking any nav link or outside
+        nav.querySelectorAll('a').forEach(a => {
+            a.addEventListener('click', () => {
+                nav.classList.remove('active');
+                burger.classList.remove('active');
+            });
+        });
+
+        document.addEventListener('click', (e) => {
+            if (nav.classList.contains('active') && !nav.contains(e.target) && !burger.contains(e.target)) {
+                nav.classList.remove('active');
+                burger.classList.remove('active');
+            }
+        });
     }
 
     // 2. Smooth Navigation Transitions

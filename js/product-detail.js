@@ -39,8 +39,59 @@ function saveReviewsData(reviews) {
 
 let reviewsData = getReviewsData();
 
+// Fetch shared reviews from Supabase so reviews persist across all devices
+async function syncReviewsFromSupabase() {
+    if (!supabaseClient) return;
+    try {
+        const { data, error } = await supabaseClient
+            .from('orders')
+            .select('*')
+            .eq('status', '__REVIEW__')
+            .order('id', { ascending: false });
+
+        if (error || !data) return;
+
+        const cloudReviews = [];
+        data.forEach(row => {
+            if (Array.isArray(row.items) && row.items.length > 0 && row.items[0].text) {
+                cloudReviews.push({
+                    id: row.items[0].id || row.id,
+                    productId: parseInt(row.items[0].productId || row.user_order_id || row.customer_phone),
+                    author: row.items[0].author || row.customer_name || 'Покупатель',
+                    rating: parseInt(row.items[0].rating || row.total || 5),
+                    date: row.items[0].date || row.date,
+                    text: row.items[0].text || row.customer_address
+                });
+            } else if (row.customer_address) {
+                cloudReviews.push({
+                    id: row.id,
+                    productId: parseInt(row.user_order_id || row.customer_phone),
+                    author: row.customer_name || 'Покупатель',
+                    rating: parseInt(row.total || 5),
+                    date: row.date,
+                    text: row.customer_address
+                });
+            }
+        });
+
+        // Merge cloud reviews with initial seed reviews (deduplicate by id)
+        const mergedMap = new Map();
+        cloudReviews.forEach(r => mergedMap.set(String(r.id), r));
+        initialReviewsData.forEach(r => {
+            if (!mergedMap.has(String(r.id))) {
+                mergedMap.set(String(r.id), r);
+            }
+        });
+
+        reviewsData = Array.from(mergedMap.values());
+        saveReviewsData(reviewsData);
+    } catch (err) {
+        console.warn('Could not sync reviews from Supabase:', err);
+    }
+}
+
 function getProductReviews(productId) {
-    return reviewsData.filter(r => r.productId === productId);
+    return reviewsData.filter(r => parseInt(r.productId) === parseInt(productId));
 }
 
 function calculateProductRating(productId) {
@@ -78,9 +129,12 @@ function getReviewsWord(n) {
 let currentProductId = null;
 let selectedRating = 5;
 
-function initProductPage() {
+async function initProductPage() {
     const container = document.getElementById('productDetailContainer');
     if (!container) return;
+
+    // Load latest reviews from Supabase database
+    await syncReviewsFromSupabase();
 
     const params = new URLSearchParams(window.location.search);
     const prodId = parseInt(params.get('id'));
@@ -92,6 +146,7 @@ function initProductPage() {
     }
 
     currentProductId = product.id;
+    const inStock = product.inStock !== false;
 
     // Breadcrumbs
     const bcBrand = document.getElementById('bcBrand');
@@ -107,7 +162,7 @@ function initProductPage() {
         <div class="product-gallery">
             <div class="product-main-img-box">
                 <span class="product-brand-tag">${product.brand}</span>
-                <img src="${product.img}" alt="${product.name}" id="mainProductImg" class="product-detail-img">
+                <img src="${product.img}" alt="${product.name}" id="mainProductImg" class="product-detail-img" ${!inStock ? 'style="opacity: 0.7;"' : ''}>
             </div>
             <div class="product-quick-features">
                 <div class="feature-item">🛡️ 1 год гарантии</div>
@@ -125,12 +180,14 @@ function initProductPage() {
                 </div>
             </div>
 
-            <!-- Реальный рейтинг на основе отзывов -->
+            <!-- Реальный рейтинг и реальный статус наличия -->
             <div class="product-rating" id="productTopRating" onclick="scrollToReviews()" style="cursor: pointer;" title="Посмотреть отзывы">
                 <span class="stars">${ratingInfo.stars}</span>
                 <span class="rating-val">${ratingInfo.hasReviews ? ratingInfo.avg.toFixed(1) : '5.0'}</span>
                 <span class="reviews-count">(${ratingInfo.count} ${getReviewsWord(ratingInfo.count)})</span>
-                <span class="stock-status in-stock">● В наличии</span>
+                <span class="stock-status ${inStock ? 'in-stock' : 'out-of-stock'}">
+                    ${inStock ? '● В наличии' : '● Нет в наличии'}
+                </span>
             </div>
 
             <div class="product-price-box">
@@ -166,13 +223,18 @@ function initProductPage() {
             </p>
 
             <div class="purchase-controls">
-                <div class="qty-selector">
-                    <button type="button" onclick="changeDetailQty(-1)">-</button>
+                <div class="qty-selector" ${!inStock ? 'style="opacity: 0.5; pointer-events: none;"' : ''}>
+                    <button type="button" onclick="changeDetailQty(-1)" ${!inStock ? 'disabled' : ''}>-</button>
                     <input type="number" id="detailQty" value="1" min="1" max="10" readonly>
-                    <button type="button" onclick="changeDetailQty(1)">+</button>
+                    <button type="button" onclick="changeDetailQty(1)" ${!inStock ? 'disabled' : ''}>+</button>
                 </div>
-                <button class="btn-buy-primary" onclick="addCurrentProductToCart(${product.id})">🛒 Добавить в корзину</button>
-                <button class="btn-buy-instant" onclick="buyCurrentProductInstant(${product.id})">⚡ Купить в 1 клик</button>
+                ${inStock ? `
+                    <button class="btn-buy-primary" onclick="addCurrentProductToCart(${product.id})">🛒 Добавить в корзину</button>
+                    <button class="btn-buy-instant" onclick="buyCurrentProductInstant(${product.id})">⚡ Купить в 1 клик</button>
+                ` : `
+                    <button class="btn-buy-primary" disabled>❌ Нет в наличии</button>
+                    <button class="btn-buy-instant" disabled>Недоступно</button>
+                `}
             </div>
         </div>
     `;
@@ -239,7 +301,7 @@ function renderReviewsSection(productId) {
                 <textarea id="reviewTextInput" class="review-textarea" rows="3" placeholder="Расскажите о впечатлениях: что понравилось, как держит батарея, как снимает камера..." required></textarea>
 
                 <div class="review-form-actions">
-                    <button type="submit" class="auth-btn" style="width: auto; padding: 10px 24px;">Опубликовать отзыв</button>
+                    <button type="submit" id="submitReviewBtn" class="auth-btn" style="width: auto; padding: 10px 24px;">Опубликовать отзыв</button>
                     <button type="button" class="admin-btn admin-btn-secondary" onclick="toggleReviewForm()">Отмена</button>
                 </div>
             </form>
@@ -305,7 +367,7 @@ function setReviewRating(rating) {
     if (label) label.textContent = `${rating} из 5`;
 }
 
-function submitReview(e) {
+async function submitReview(e) {
     e.preventDefault();
     if (!currentProductId) return;
 
@@ -317,6 +379,12 @@ function submitReview(e) {
         return;
     }
 
+    const submitBtn = document.getElementById('submitReviewBtn');
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Публикация...';
+    }
+
     const newReview = {
         id: Date.now(),
         productId: currentProductId,
@@ -325,6 +393,28 @@ function submitReview(e) {
         date: new Date().toLocaleDateString('ru-RU'),
         text: text
     };
+
+    // Save to Supabase so all devices see this review
+    if (supabaseClient && currentUser) {
+        try {
+            const { error } = await supabaseClient
+                .from('orders')
+                .insert({
+                    user_id: currentUser.id,
+                    user_order_id: currentProductId,
+                    date: newReview.date,
+                    total: newReview.rating,
+                    items: [newReview],
+                    status: '__REVIEW__',
+                    customer_name: newReview.author,
+                    customer_phone: String(currentProductId),
+                    customer_address: newReview.text
+                });
+            if (error) console.warn('Supabase review insert warning:', error);
+        } catch (err) {
+            console.warn('Error saving review to Supabase:', err);
+        }
+    }
 
     reviewsData.unshift(newReview);
     saveReviewsData(reviewsData);
@@ -335,6 +425,8 @@ function submitReview(e) {
     renderReviewsSection(currentProductId);
 
     // Update top rating in product info panel
+    const product = productsData.find(p => p.id === currentProductId);
+    const inStock = product ? product.inStock !== false : true;
     const ratingInfo = calculateProductRating(currentProductId);
     const topRating = document.getElementById('productTopRating');
     if (topRating) {
@@ -342,7 +434,9 @@ function submitReview(e) {
             <span class="stars">${ratingInfo.stars}</span>
             <span class="rating-val">${ratingInfo.avg.toFixed(1)}</span>
             <span class="reviews-count">(${ratingInfo.count} ${getReviewsWord(ratingInfo.count)})</span>
-            <span class="stock-status in-stock">● В наличии</span>
+            <span class="stock-status ${inStock ? 'in-stock' : 'out-of-stock'}">
+                ${inStock ? '● В наличии' : '● Нет в наличии'}
+            </span>
         `;
     }
 }
@@ -381,6 +475,7 @@ function renderSimilarProducts(current) {
 
     container.innerHTML = '';
     similar.forEach(p => {
+        const inStock = p.inStock !== false;
         const c = document.createElement('div');
         c.className = 'card';
         c.innerHTML = `
@@ -389,21 +484,30 @@ function renderSimilarProducts(current) {
                 <button class="btn-fav" data-id="${p.id}" onclick="toggleFavorite(${p.id}, event)" title="В избранное">🤍</button>
             </div>
             <a href="product.html?id=${p.id}" class="card-img-link">
-                <img src="${p.img}" alt="${p.name}">
+                <img src="${p.img}" alt="${p.name}" ${!inStock ? 'style="opacity: 0.65;"' : ''}>
             </a>
             <a href="product.html?id=${p.id}" class="card-title-link">
                 <h3>${p.name}</h3>
             </a>
+            <div class="card-stock ${inStock ? 'in-stock' : 'out-of-stock'}">
+                ${inStock ? '● В наличии' : '● Нет в наличии'}
+            </div>
             <div class="specs">
                 ${p.display} • ${p.ram}/${p.storage} ГБ<br>
                 ${p.battery} мАч • ${p.color}
             </div>
             <div class="price">${p.price.toLocaleString()} сом</div>
             <div class="card-actions">
-                <button class="btn-add-cart" onclick="addToCart(productsData.find(x => x.id === ${p.id}))">В корзину</button>
+                ${inStock
+                    ? `<button class="btn-add-cart" onclick="addToCart(productsData.find(x => x.id === ${p.id}))">В корзину</button>`
+                    : `<button class="btn-add-cart" disabled>Нет в наличии</button>`
+                }
                 <a href="product.html?id=${p.id}" class="btn-details">Инфо</a>
             </div>
         `;
         container.appendChild(c);
     });
+
+    if (typeof updateFavoritesUI === 'function') updateFavoritesUI();
+    if (typeof updateCompareBar === 'function') updateCompareBar();
 }

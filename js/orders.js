@@ -8,7 +8,7 @@ async function loadOrdersFunc() {
     if (!ordersListEl || !currentUser) return;
 
     try {
-        const { data: orders, error } = await supabaseClient
+        const { data: rawOrders, error } = await supabaseClient
             .from('orders')
             .select('*')
             .eq('user_id', currentUser.id)
@@ -16,7 +16,9 @@ async function loadOrdersFunc() {
 
         if (error) throw error;
 
-        if (!orders || orders.length === 0) {
+        const orders = (rawOrders || []).filter(o => !String(o.status || '').startsWith('__'));
+
+        if (orders.length === 0) {
             ordersListEl.innerHTML = '<p style="text-align:center; color: var(--muted); padding: 40px;">История заказов пуста. Время сделать первую покупку!</p>';
             return;
         }
