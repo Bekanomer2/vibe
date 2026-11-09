@@ -4,6 +4,14 @@
 
 let allOrdersList = [];
 
+// Приводит телефон к виду без кода страны и ведущего нуля: +996555123456, 996555123456 и 0555123456 -> 555123456
+function normalizePhone(value) {
+    let digits = String(value || '').replace(/\D/g, '');
+    if (digits.startsWith('996')) digits = digits.slice(3);
+    else if (digits.startsWith('0')) digits = digits.slice(1);
+    return digits;
+}
+
 async function initAdminOrdersPage() {
     if (!isAdmin(currentUser)) {
         showToast('Доступ запрещен. Страница доступна только администраторам!', 'error');
@@ -26,6 +34,7 @@ async function loadAllOrdersFromDB() {
         const { data: orders, error } = await supabaseClient
             .from('orders')
             .select('*')
+            .or(REAL_ORDERS_FILTER)
             .order('id', { ascending: false });
 
         if (error) throw error;
@@ -69,7 +78,7 @@ function updateOrdersStats() {
 
 function filterAdminOrders() {
     const phoneSearch = document.getElementById('orderPhoneSearch')?.value.trim().toLowerCase() || '';
-    const cleanSearch = phoneSearch.replace(/[\s\-\(\)\+]/g, '');
+    const cleanSearch = normalizePhone(phoneSearch);
     const statusFilter = document.getElementById('orderStatusFilter')?.value || 'all';
     const sortFilter = document.getElementById('orderSortFilter')?.value || 'date_desc';
 
@@ -78,14 +87,13 @@ function filterAdminOrders() {
     // 1. Поиск по номеру телефона
     if (cleanSearch) {
         list = list.filter(o => {
-            const phone = (o.customer_phone || '').replace(/[\s\-\(\)\+]/g, '').toLowerCase();
-            return phone.includes(cleanSearch);
+            return normalizePhone(o.customer_phone).includes(cleanSearch);
         });
     }
 
     // 2. Фильтрация по статусу
     if (statusFilter !== 'all') {
-        list = list.filter(o => (o.status || 'В работе') === statusFilter);
+        list = list.filter(o => (o.status || 'В обработке') === statusFilter);
     }
 
     // 3. Сортировка по дате или сумме
@@ -210,7 +218,7 @@ async function changeOrderStatusFromAdmin(orderId, newStatus) {
 
     const target = allOrdersList.find(o => o.id === orderId);
     if (!target) return;
-    if ((target.status || 'В работе') === newStatus) return;
+    if ((target.status || 'В обработке') === newStatus) return;
 
     try {
         // Подготавливаем обновленные items с новым _tracked_status для синхронизации с Telegram
@@ -254,10 +262,6 @@ async function changeOrderStatusFromAdmin(orderId, newStatus) {
         updateOrdersStats();
         filterAdminOrders();
     } catch (err) {
-        console.error('Error updating order status:', err);
-        showToast('Ошибка обновления статуса: ' + err.message, 'error');
-    }
-}
         console.error('Error updating order status:', err);
         showToast('Ошибка обновления статуса: ' + err.message, 'error');
     }
