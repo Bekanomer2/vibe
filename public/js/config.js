@@ -11,7 +11,7 @@ if (!SUPABASE_URL || !SUPABASE_KEY) {
 }
 
 let supabaseClient;
-if (!window.supabaseClient && window.supabase) {
+if (!window.supabaseClient && window.supabase && SUPABASE_URL && SUPABASE_KEY) {
     window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 }
 supabaseClient = window.supabaseClient;
@@ -19,6 +19,17 @@ supabaseClient = window.supabaseClient;
 // Telegram Config
 const TG_BOT_TOKEN = '8163887643:AAG8HCPOrR3Eo4FNgsELS8qWEzmF5Nq1OD0';
 const TG_CHAT_ID = '-5049916055';
+
+// PostgREST-фильтр: только настоящие заказы (без служебных строк со статусом __REVIEW__, __STOCK_SYNC__ и т.д.)
+const REAL_ORDERS_FILTER = 'status.is.null,status.not.like.\\_\\_*';
+
+// Экранирование текста для Telegram parse_mode=HTML (и вставки в HTML)
+function escapeHtml(value) {
+    return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+}
 
 // Global Toast Notifications
 let activeToastTimer = null;
@@ -155,7 +166,7 @@ async function validateTelegramOrderTransitions(ordersList) {
             if (!o || String(o.status || '').startsWith('__')) continue;
             if (!Array.isArray(o.items) || o.items.length === 0) continue;
 
-            const currentStatus = o.status || 'В работе';
+            const currentStatus = o.status || 'В обработке';
             const trackedStatus = o.items[0]._tracked_status;
             const tgMsgId = o.items[0]._tg_msg_id;
 
@@ -180,14 +191,19 @@ async function validateTelegramOrderTransitions(ordersList) {
                 const allowed = isTelegramTransitionAllowed(trackedStatus, currentStatus);
 
                 if (!allowed) {
-                    // Revert illegal Telegram transition back to trackedStatus!
-                    o.status = trackedStatus;
-                    anyChanged = true;
-
-                    await supabaseClient
+                    // Откатываем запрещённую смену из Telegram, но только если статус всё ещё тот,
+                    // что мы прочитали (иначе админ уже изменил его на сайте — не затираем его решение)
+                    const { data: reverted } = await supabaseClient
                         .from('orders')
                         .update({ status: trackedStatus })
-                        .eq('id', o.id);
+                        .eq('id', o.id)
+                        .eq('status', currentStatus)
+                        .select('id');
+
+                    if (!reverted || reverted.length === 0) continue;
+
+                    o.status = trackedStatus;
+                    anyChanged = true;
 
                     if (tgMsgId) {
                         await updateTelegramMessageKeyboard(tgMsgId, o.id, trackedStatus);
@@ -242,6 +258,7 @@ function startTelegramStatusGuard() {
             const { data: orders, error } = await supabaseClient
                 .from('orders')
                 .select('*')
+                .or(REAL_ORDERS_FILTER)
                 .order('id', { ascending: false })
                 .limit(30);
 

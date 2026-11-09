@@ -11,6 +11,7 @@ async function loadOrdersFunc() {
         const { data: rawOrders, error } = await supabaseClient
             .from('orders')
             .select('*')
+            .or(REAL_ORDERS_FILTER)
             .eq('user_id', currentUser.id)
             .order('id', { ascending: false });
 
