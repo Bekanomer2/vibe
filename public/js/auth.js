@@ -62,8 +62,21 @@ function updateAdminUI() {
 
 // Initialize Auth State on every page
 async function initAuth() {
-    // 1. Try to initialize admin account in background
-    adminInitializer();
+    // Без клиента Supabase (нет .env или не загрузился CDN) страница работать не может
+    if (!supabaseClient) {
+        console.error('EzShop: клиент Supabase не создан — проверьте .env и подключение к сети');
+        showToast('Не удалось подключиться к серверу. Обновите страницу.', 'error');
+        const failLoader = document.getElementById('pageLoader');
+        if (failLoader) failLoader.classList.add('hidden');
+        document.body.classList.remove('auth-loading');
+        return;
+    }
+
+    // 1. Системного админа создаём один раз на браузер и только со страницы входа
+    if (window.location.pathname.includes('login.html') && !localStorage.getItem('ez_admin_init_done')) {
+        localStorage.setItem('ez_admin_init_done', '1');
+        adminInitializer();
+    }
 
     const hasLocalSession = Object.keys(localStorage).some(k => k.startsWith('sb-'));
     const path = window.location.pathname;
@@ -242,7 +255,10 @@ async function handleLogin(e) {
     }
 }
 
-function logout() {
+async function logout() {
+    try {
+        if (supabaseClient) await supabaseClient.auth.signOut({ scope: 'local' });
+    } catch (e) { /* выходим локально в любом случае */ }
     Object.keys(localStorage).forEach(key => {
         if (key.includes('supabase') || key.startsWith('sb-')) {
             localStorage.removeItem(key);

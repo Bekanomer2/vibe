@@ -29,18 +29,32 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 2. Smooth Navigation Transitions
+    // 2. Smooth Navigation Transitions (делегирование: работает и для ссылок, созданных позже)
     const loader = document.getElementById('pageLoader');
-    document.querySelectorAll('a').forEach(link => {
-        link.addEventListener('click', (e) => {
-            const href = link.getAttribute('href');
-            if (!href || href.startsWith('#') || href.includes('javascript:')) return;
-            e.preventDefault();
-            if (loader) loader.classList.remove('hidden');
-            setTimeout(() => {
-                window.location.href = href;
-            }, 200);
-        });
+    document.addEventListener('click', (e) => {
+        const link = e.target.closest && e.target.closest('a');
+        if (!link || e.defaultPrevented) return;
+        if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+        if (link.target && link.target !== '_self') return;
+        if (link.hasAttribute('download')) return;
+
+        const href = link.getAttribute('href');
+        if (!href || href.startsWith('#') || /^(javascript:|tel:|mailto:)/i.test(href)) return;
+
+        const url = new URL(link.href, window.location.href);
+        if (url.origin !== window.location.origin) return;
+        if (url.pathname === window.location.pathname && url.search === window.location.search && url.hash) return;
+
+        e.preventDefault();
+        if (loader) loader.classList.remove('hidden');
+        setTimeout(() => {
+            window.location.href = link.href;
+        }, 200);
+    });
+
+    // Возврат кнопкой «Назад» (bfcache): прячем лоадер, иначе он остаётся на экране
+    window.addEventListener('pageshow', (e) => {
+        if (e.persisted && loader) loader.classList.add('hidden');
     });
 
     // 3. Initialize Authentication on every page
