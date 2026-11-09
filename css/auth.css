@@ -270,7 +270,10 @@
 }
 
 .auth-input:focus + label,
-.auth-input:not(:placeholder-shown) + label {
+.auth-input:not(:placeholder-shown) + label,
+.auth-input:-webkit-autofill + label,
+.auth-input:autofill + label,
+.auth-input[data-filled="true"] + label {
     top: 17px;
     transform: translateY(-50%) scale(.78);
     color: var(--accent);

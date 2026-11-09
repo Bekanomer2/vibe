@@ -219,8 +219,27 @@
     /* ---------- Полёт товара в корзину ---------- */
     function cartTarget() {
         const floating = $('.cart-btn');
-        if (floating && floating.offsetParent !== null) return floating;
-        return $('.bottom-nav a[href="cart.html"]') || floating;
+        if (floating) {
+            const r = floating.getBoundingClientRect();
+            if (r.width > 0 && r.height > 0 && window.getComputedStyle(floating).display !== 'none') {
+                return floating;
+            }
+        }
+        const bottomNavCart = $('.bottom-nav a[href="cart.html"]');
+        if (bottomNavCart) {
+            const r = bottomNavCart.getBoundingClientRect();
+            if (r.width > 0 && r.height > 0 && window.getComputedStyle(bottomNavCart).display !== 'none') {
+                return bottomNavCart;
+            }
+        }
+        const navCart = $('.main-nav a[href="cart.html"]');
+        if (navCart) {
+            const r = navCart.getBoundingClientRect();
+            if (r.width > 0 && r.height > 0 && window.getComputedStyle(navCart).display !== 'none') {
+                return navCart;
+            }
+        }
+        return floating || document.querySelector('#cartBtn');
     }
 
     function bump(el) {
@@ -240,6 +259,7 @@
             if (!img || !target) return;
             const from = img.getBoundingClientRect();
             const to = target.getBoundingClientRect();
+            if (to.width === 0 && to.height === 0) return;
             const size = Math.min(from.width, from.height, 140);
             const fly = document.createElement('img');
             fly.src = img.currentSrc || img.src;

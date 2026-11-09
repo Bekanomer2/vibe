@@ -121,7 +121,36 @@
                 </div>
 
                 <!-- Форма добавления / редактирования (выезжает справа) -->
-                <aside class="admin-form-panel" id="productDrawer" aria-label="Форма телефона">
+                
+            </div>
+        </div>
+
+        <!-- ==========================================
+             ВКЛАДКА 2: Бренды
+             ========================================== -->
+        <div class="admin-tab-content" id="tabContentBrands">
+            <div class="admin-layout">
+                <div class="admin-table-panel">
+                    <div class="panel-header">
+                        <h3><span data-icon="tag"></span>Все бренды в магазине <small class="panel-count">Всего: <b id="brandsListCount">0</b></small></h3>
+                        <div class="table-actions-header">
+                            <button type="button" class="admin-btn admin-btn-primary" onclick="openBrandDrawerNew()"><span data-icon="plus"></span>Добавить бренд</button>
+                        </div>
+                    </div>
+
+                    <div class="brands-grid" id="adminBrandsGrid">
+                        <!-- Заполняется динамически -->
+                    </div>
+                </div>
+
+                
+            </div>
+        </div>
+    </div>
+
+    
+
+    <aside class="admin-form-panel" id="productDrawer" aria-label="Форма телефона">
                     <div class="panel-header">
                         <h3 id="formTitle">Добавить новый телефон</h3>
                         <button type="button" class="drawer-close" onclick="closeAdminDrawer()" aria-label="Закрыть">&times;</button>
@@ -250,28 +279,8 @@
                         </div>
                     </form>
                 </aside>
-            </div>
-        </div>
 
-        <!-- ==========================================
-             ВКЛАДКА 2: Бренды
-             ========================================== -->
-        <div class="admin-tab-content" id="tabContentBrands">
-            <div class="admin-layout">
-                <div class="admin-table-panel">
-                    <div class="panel-header">
-                        <h3><span data-icon="tag"></span>Все бренды в магазине <small class="panel-count">Всего: <b id="brandsListCount">0</b></small></h3>
-                        <div class="table-actions-header">
-                            <button type="button" class="admin-btn admin-btn-primary" onclick="openBrandDrawerNew()"><span data-icon="plus"></span>Добавить бренд</button>
-                        </div>
-                    </div>
-
-                    <div class="brands-grid" id="adminBrandsGrid">
-                        <!-- Заполняется динамически -->
-                    </div>
-                </div>
-
-                <aside class="admin-form-panel" id="brandDrawer" aria-label="Форма бренда">
+    <aside class="admin-form-panel" id="brandDrawer" aria-label="Форма бренда">
                     <div class="panel-header">
                         <h3 id="brandFormTitle">Добавить новый бренд</h3>
                         <button type="button" class="drawer-close" onclick="closeAdminDrawer()" aria-label="Закрыть">&times;</button>
@@ -297,9 +306,6 @@
                         </div>
                     </form>
                 </aside>
-            </div>
-        </div>
-    </div>
 
     <div class="admin-scrim" id="adminScrim" onclick="closeAdminDrawer()"></div>
     <div class="toast-container" id="toastContainer" aria-live="polite"></div>

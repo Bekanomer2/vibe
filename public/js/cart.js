@@ -78,10 +78,6 @@ ${order.items.map(i => `- ${escapeHtml(i.name)} (x${i.qty})`).join('\n')}
                 inline_keyboard: [
                     [
                         { text: '🔨 В работу', callback_data: `status:${order.global_id}:В работе` },
-                        { text: '✅ Доставлен', callback_data: `status:${order.global_id}:Доставлен` }
-                    ],
-                    [
-                        { text: '🔄 Возврат', callback_data: `status:${order.global_id}:Возврат` },
                         { text: '❌ Отменить', callback_data: `status:${order.global_id}:Отменен` }
                     ]
                 ]

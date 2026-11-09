@@ -66,17 +66,25 @@ function showToast(msg, type = 'success') {
 function getTelegramReplyMarkupForStatus(globalOrderId, status) {
     const st = status || 'В обработке';
 
-    // Для новых заказов (В обработке) и заказов в процессе (В работе) доступны основные действия
-    if (st === 'В обработке' || st === 'В работе') {
+    // 1. При поступлении заказа (В обработке) — только 2 кнопки: "В работу" и "Отменить"
+    if (st === 'В обработке') {
         return {
             inline_keyboard: [
                 [
                     { text: '🔨 В работу', callback_data: `status:${globalOrderId}:В работе` },
-                    { text: '✅ Доставлен', callback_data: `status:${globalOrderId}:Доставлен` }
-                ],
-                [
-                    { text: '🔄 Возврат', callback_data: `status:${globalOrderId}:Возврат` },
                     { text: '❌ Отменить', callback_data: `status:${globalOrderId}:Отменен` }
+                ]
+            ]
+        };
+    }
+
+    // 2. Если заказ переведён "В работу" — кнопки меняются на "Доставлен" и "Возврат"
+    if (st === 'В работе') {
+        return {
+            inline_keyboard: [
+                [
+                    { text: '✅ Доставлен', callback_data: `status:${globalOrderId}:Доставлен` },
+                    { text: '🔄 Возврат', callback_data: `status:${globalOrderId}:Возврат` }
                 ]
             ]
         };
@@ -141,7 +149,12 @@ async function sendTelegramAlertMessage(text) {
 // - From "Возврат" or "Отменен": cannot be changed via Telegram (only Admin on website can override)
 function isTelegramTransitionAllowed(oldStatus, newStatus) {
     if (oldStatus === newStatus) return true;
-    if (oldStatus === 'В обработке' || oldStatus === 'В работе') return true;
+    if (oldStatus === 'В обработке') {
+        return newStatus === 'В работе' || newStatus === 'Отменен';
+    }
+    if (oldStatus === 'В работе') {
+        return newStatus === 'Доставлен' || newStatus === 'Возврат' || newStatus === 'Отменен';
+    }
     if (oldStatus === 'Доставлен') {
         return newStatus === 'Возврат';
     }

@@ -268,3 +268,41 @@ async function logout() {
     window.supabaseClient = null;
     window.location.replace('login.html');
 }
+
+// Синхронизация состояния автозаполнения браузера (плавающий label)
+function syncAutofillStates() {
+    document.querySelectorAll('.auth-input').forEach(input => {
+        let isFilled = false;
+        try {
+            isFilled = Boolean(input.value) || input.matches(':-webkit-autofill');
+        } catch (_) {
+            isFilled = Boolean(input.value);
+        }
+        if (isFilled) {
+            input.setAttribute('data-filled', 'true');
+        } else {
+            input.removeAttribute('data-filled');
+        }
+    });
+}
+
+if (typeof window !== 'undefined') {
+    ['DOMContentLoaded', 'load', 'pageshow'].forEach(evt => {
+        window.addEventListener(evt, () => {
+            syncAutofillStates();
+            setTimeout(syncAutofillStates, 100);
+            setTimeout(syncAutofillStates, 400);
+            setTimeout(syncAutofillStates, 1000);
+        });
+    });
+    document.addEventListener('input', e => {
+        if (e.target && e.target.classList && e.target.classList.contains('auth-input')) {
+            syncAutofillStates();
+        }
+    });
+    document.addEventListener('change', e => {
+        if (e.target && e.target.classList && e.target.classList.contains('auth-input')) {
+            syncAutofillStates();
+        }
+    });
+}
