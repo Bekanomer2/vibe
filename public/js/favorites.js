@@ -39,7 +39,7 @@ function updateFavoritesUI() {
 
     // Update header count badges
     document.querySelectorAll('.nav-fav-count').forEach(el => {
-        el.textContent = favs.length;
+        el.textContent = favs.filter(id => productsData.some(p => p.id === id)).length;
     });
 
     // Update heart icons on cards

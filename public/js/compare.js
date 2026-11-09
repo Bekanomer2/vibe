@@ -73,7 +73,7 @@ function updateCompareBar() {
     const comp = getCompareIds();
     const bar = document.getElementById('compareBar');
     const navCount = document.getElementById('navCompareCount');
-    if (navCount) navCount.textContent = comp.length;
+    if (navCount) navCount.textContent = comp.filter(id => productsData.some(p => p.id === id)).length;
 
     if (bar) {
         if (comp.length > 0) {

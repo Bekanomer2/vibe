@@ -115,7 +115,8 @@ function toggleProductStock(id) {
         if (typeof saveStockOverride === 'function') {
             saveStockOverride(id, newStock);
         }
-        saveProductsData(productsData);
+        // Наличие уже синхронизируется отдельной строкой (__STOCK_SYNC__), полный снимок каталога не нужен
+        saveProductsData(productsData, false);
         const statusLabel = newStock ? 'В наличии' : 'Нет в наличии';
         showToast(`${productsData[idx].name}: статус изменен на "${statusLabel}"`, 'info');
         filterAdminProducts();
@@ -339,6 +340,10 @@ function handleBrandFormSubmit(e) {
         const targetId = parseInt(editId);
         const idx = brandsData.findIndex(b => b.id === targetId);
         if (idx > -1) {
+            if (brandsData.some(b => b.id !== targetId && b.name.toLowerCase() === name.toLowerCase())) {
+                showToast(`Бренд "${name}" уже существует!`, 'error');
+                return;
+            }
             const oldName = brandsData[idx].name;
             brandsData[idx] = { id: targetId, name, country };
             saveBrandsData(brandsData);
@@ -418,7 +423,7 @@ function deleteBrandInAdmin(id) {
     const count = productsData.filter(p => p.brand.toLowerCase() === b.name.toLowerCase()).length;
     let msg = `Удалить бренд "${b.name}"?`;
     if (count > 0) {
-        msg += ` Внимание: у этого бренда ${count} привязанных телефонов. Они останутся в каталоге, но бренд будет удален из списка фильтров.`;
+        msg += ` Внимание: у этого бренда ${count} привязанных телефонов. Они останутся в каталоге, а бренд продолжит показываться в фильтрах, пока у него есть телефоны.`;
     }
 
     if (confirm(msg)) {
