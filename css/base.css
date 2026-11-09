@@ -629,6 +629,16 @@ body.auth-loading {
     animation-duration: 0s;
 }
 
+/* Шапка одинакова на всех страницах — без кроссфейда старого и нового снимка,
+   иначе логотип на долю секунды мигает другим цветом */
+::view-transition-old(site-header) {
+    display: none;
+}
+
+::view-transition-new(site-header) {
+    animation: none;
+}
+
 @keyframes vtOut {
     to { opacity: 0; transform: translateY(-10px) scale(.992); filter: blur(4px); }
 }
@@ -919,7 +929,9 @@ footer {
     opacity: 0;
     visibility: hidden;
     transition: opacity .3s, visibility .3s;
-    z-index: 280;
+    /* Ниже шапки (z-index 200): меню лежит внутри шапки и должно быть поверх затемнения.
+       Выше нижней навигации (190), чтобы затемнялась и она. */
+    z-index: 195;
 }
 
 .nav-scrim.show {
