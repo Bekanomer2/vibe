@@ -60,7 +60,8 @@ async function syncReviewsFromSupabase() {
                     author: row.items[0].author || row.customer_name || 'Покупатель',
                     rating: parseInt(row.items[0].rating || row.total || 5),
                     date: row.items[0].date || row.date,
-                    text: row.items[0].text || row.customer_address
+                    text: row.items[0].text || row.customer_address,
+                    verified: !!row.items[0].verified
                 });
             } else if (row.customer_address) {
                 cloudReviews.push({
@@ -160,7 +161,7 @@ async function initProductPage() {
     const params = new URLSearchParams(window.location.search);
     const prodId = parseInt(params.get('id'));
 
-    const product = productsData.find(p => p.id === prodId) || productsData[0];
+    const product = productsData.find(p => p.id === prodId);
     if (!product) {
         container.innerHTML = '<div style="padding:40px; text-align:center;">Товар не найден. <a href="index.html">В каталог</a></div>';
         return;
@@ -345,7 +346,7 @@ function renderReviewsSection(productId) {
                             <div class="review-avatar">${(r.author || 'П')[0].toUpperCase()}</div>
                             <div>
                                 <span class="review-author-name">${r.author}</span>
-                                <span class="review-badge-verified">✓ Покупатель</span>
+                                ${(r.verified || initialReviewsData.some(s => s.id === r.id)) ? '<span class="review-badge-verified">✓ Покупатель</span>' : ''}
                             </div>
                         </div>
                         <div>
@@ -408,7 +409,23 @@ async function submitReview(e) {
         submitBtn.textContent = 'Публикация...';
     }
 
+    // Бейдж «Покупатель» — только если у пользователя есть неотменённый заказ с этим телефоном
+    let verified = false;
+    if (supabaseClient && currentUser) {
+        try {
+            const { data: mine } = await supabaseClient
+                .from('orders')
+                .select('items, status')
+                .or(REAL_ORDERS_FILTER)
+                .eq('user_id', currentUser.id);
+            verified = (mine || []).some(o =>
+                o.status !== 'Отменен' && o.status !== 'Возврат' &&
+                (o.items || []).some(i => i.id === currentProductId));
+        } catch (err) { /* бейдж просто не покажем */ }
+    }
+
     const newReview = {
+        verified,
         id: Date.now(),
         productId: currentProductId,
         author: author,
@@ -433,9 +450,15 @@ async function submitReview(e) {
                     customer_phone: String(currentProductId),
                     customer_address: newReview.text
                 });
-            if (error) console.warn('Supabase review insert warning:', error);
+            if (error) throw error;
         } catch (err) {
             console.warn('Error saving review to Supabase:', err);
+            showToast('Не удалось опубликовать отзыв. Попробуйте ещё раз.', 'error');
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Опубликовать отзыв';
+            }
+            return;
         }
     }
 
