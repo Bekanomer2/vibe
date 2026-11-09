@@ -4,11 +4,8 @@
 
 // Значения подставляются из .env (VITE_SUPABASE_URL / VITE_SUPABASE_KEY) через vite.config.js
 const ENV = window.__ENV__ || {};
-const SUPABASE_URL = ENV.VITE_SUPABASE_URL;
-const SUPABASE_KEY = ENV.VITE_SUPABASE_KEY;
-if (!SUPABASE_URL || !SUPABASE_KEY) {
-    console.error('EzShop: не заданы VITE_SUPABASE_URL / VITE_SUPABASE_KEY в .env');
-}
+const SUPABASE_URL = ENV.VITE_SUPABASE_URL || 'https://vsxvbrjfuhzvdyzbpjmn.supabase.co';
+const SUPABASE_KEY = ENV.VITE_SUPABASE_KEY || 'sb_publishable_aGa3JAz9zF_lQA2swDU43A_UA4fKskN';
 
 let supabaseClient;
 if (!window.supabaseClient && window.supabase && SUPABASE_URL && SUPABASE_KEY) {
