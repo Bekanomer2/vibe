@@ -109,10 +109,12 @@ ${order.items.map(i => `- ${escapeHtml(i.name)} (x${i.qty})`).join('\n')}
                     .update({ items: updatedItems })
                     .eq('id', order.global_id);
             }
+            return msgId;
         }
     } catch (err) {
         console.error('Telegram notification error:', err);
     }
+    return null;
 }
 
 // Cart Page Rendering

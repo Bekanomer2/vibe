@@ -289,7 +289,7 @@ function startTelegramStatusGuard() {
         }
     };
 
-    // Run initial check and then every 4 seconds
-    setTimeout(runCheck, 1500);
-    tgGuardInterval = setInterval(runCheck, 4000);
+    // Run initial check and then every 2.5 seconds
+    setTimeout(runCheck, 800);
+    tgGuardInterval = setInterval(runCheck, 2500);
 }
