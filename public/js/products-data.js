@@ -192,6 +192,7 @@ async function saveCatalogToSupabase() {
     try {
         const payload = [{
             type: 'catalog_sync',
+            initialIds: initialProductsData.map(p => p.id),
             products: productsData,
             brands: brandsData,
             updatedAt: Date.now()
@@ -245,7 +246,15 @@ async function syncCatalogWithSupabase() {
         if (!error && data && data.length > 0) {
             const syncItem = Array.isArray(data[0].items) ? data[0].items[0] : data[0].items;
             if (syncItem && Array.isArray(syncItem.products) && syncItem.products.length > 0) {
-                saveProductsData(syncItem.products, false);
+                let cloudProducts = syncItem.products;
+                // Телефоны, добавленные в код после последнего сохранения каталога, добавляем к облачной версии
+                if (Array.isArray(syncItem.initialIds)) {
+                    const knownInitial = new Set(syncItem.initialIds);
+                    const haveIds = new Set(cloudProducts.map(p => p.id));
+                    const fresh = initialProductsData.filter(p => !knownInitial.has(p.id) && !haveIds.has(p.id));
+                    if (fresh.length > 0) cloudProducts = [...cloudProducts, ...fresh];
+                }
+                saveProductsData(cloudProducts, false);
             }
             if (syncItem && Array.isArray(syncItem.brands) && syncItem.brands.length > 0) {
                 saveBrandsData(syncItem.brands, false);

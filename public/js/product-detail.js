@@ -60,7 +60,8 @@ async function syncReviewsFromSupabase() {
                     author: row.items[0].author || row.customer_name || 'Покупатель',
                     rating: parseInt(row.items[0].rating || row.total || 5),
                     date: row.items[0].date || row.date,
-                    text: row.items[0].text || row.customer_address
+                    text: row.items[0].text || row.customer_address,
+                    verified: !!row.items[0].verified
                 });
             } else if (row.customer_address) {
                 cloudReviews.push({
@@ -107,7 +108,7 @@ function calculateProductRating(productId) {
     const sum = list.reduce((s, r) => s + r.rating, 0);
     const avg = sum / list.length;
     const roundedStars = Math.round(avg);
-    const stars = '⭐'.repeat(roundedStars);
+    const stars = '★'.repeat(roundedStars) + '☆'.repeat(Math.max(0, 5 - roundedStars));
     return {
         avg: avg,
         count: list.length,
@@ -120,7 +121,7 @@ function renderTopRatingHTML(ratingInfo, inStock) {
     if (!ratingInfo.hasReviews) {
         return `
             <span class="no-reviews-pill" style="color: var(--muted); font-size: 13px; display: inline-flex; align-items: center; gap: 6px;">
-                💬 Пока нет отзывов (будьте первым!)
+                Пока нет отзывов — будьте первым!
             </span>
             <span class="stock-status ${inStock ? 'in-stock' : 'out-of-stock'}">
                 ${inStock ? '● В наличии' : '● Нет в наличии'}
@@ -160,7 +161,7 @@ async function initProductPage() {
     const params = new URLSearchParams(window.location.search);
     const prodId = parseInt(params.get('id'));
 
-    const product = productsData.find(p => p.id === prodId) || productsData[0];
+    const product = productsData.find(p => p.id === prodId);
     if (!product) {
         container.innerHTML = '<div style="padding:40px; text-align:center;">Товар не найден. <a href="index.html">В каталог</a></div>';
         return;
@@ -182,22 +183,22 @@ async function initProductPage() {
     container.innerHTML = `
         <div class="product-gallery">
             <div class="product-main-img-box">
-                <span class="product-brand-tag">${product.brand}</span>
-                <img src="${product.img}" alt="${product.name}" id="mainProductImg" class="product-detail-img" ${!inStock ? 'style="opacity: 0.7;"' : ''}>
+                <span class="product-brand-tag">${esc(product.brand)}</span>
+                <img src="${esc(product.img)}" alt="${esc(product.name)}" id="mainProductImg" class="product-detail-img" ${!inStock ? 'style="opacity: 0.7;"' : ''}>
             </div>
             <div class="product-quick-features">
-                <div class="feature-item">🛡️ 1 год гарантии</div>
-                <div class="feature-item">🚚 Быстрая доставка по КР</div>
-                <div class="feature-item">🔄 14 дней на обмен и возврат</div>
+                <div class="feature-item">${ico('shield-check')} 1 год гарантии</div>
+                <div class="feature-item">${ico('truck')} Быстрая доставка по КР</div>
+                <div class="feature-item">${ico('refresh')} 14 дней на обмен и возврат</div>
             </div>
         </div>
 
         <div class="product-info-panel">
             <div class="product-header-line">
-                <h1 class="product-title">${product.name}</h1>
+                <h1 class="product-title">${esc(product.name)}</h1>
                 <div class="product-action-icons">
-                    <button class="btn-compare" data-id="${product.id}" onclick="toggleCompare(${product.id}, event)" title="Сравнить">⚖️</button>
-                    <button class="btn-fav" data-id="${product.id}" onclick="toggleFavorite(${product.id}, event)" title="В избранное">🤍</button>
+                    <button type="button" class="btn-compare" data-id="${product.id}" onclick="toggleCompare(${product.id}, event)" title="Сравнить" aria-label="Сравнить">${ico('scale')}</button>
+                    <button type="button" class="btn-fav" data-id="${product.id}" onclick="toggleFavorite(${product.id}, event)" title="В избранное" aria-label="В избранное">${ico('heart')}</button>
                 </div>
             </div>
 
@@ -212,29 +213,29 @@ async function initProductPage() {
 
             <div class="product-specs-grid">
                 <div class="spec-tile">
-                    <span class="spec-tile-label">📱 Экран</span>
-                    <span class="spec-tile-val">${product.display}</span>
+                    <span class="spec-tile-label">${ico('monitor')} Экран</span>
+                    <span class="spec-tile-val">${esc(product.display)}</span>
                 </div>
                 <div class="spec-tile">
-                    <span class="spec-tile-label">⚡ Оперативная память</span>
+                    <span class="spec-tile-label">${ico('cpu')} Оперативная память</span>
                     <span class="spec-tile-val">${product.ram} ГБ</span>
                 </div>
                 <div class="spec-tile">
-                    <span class="spec-tile-label">💾 Накопитель</span>
+                    <span class="spec-tile-label">${ico('layers')} Накопитель</span>
                     <span class="spec-tile-val">${product.storage} ГБ</span>
                 </div>
                 <div class="spec-tile">
-                    <span class="spec-tile-label">🔋 Аккумулятор</span>
+                    <span class="spec-tile-label">${ico('battery')} Аккумулятор</span>
                     <span class="spec-tile-val">${product.battery} мАч</span>
                 </div>
                 <div class="spec-tile">
-                    <span class="spec-tile-label">🎨 Цвет корпуса</span>
-                    <span class="spec-tile-val">${product.color}</span>
+                    <span class="spec-tile-label">${ico('palette')} Цвет корпуса</span>
+                    <span class="spec-tile-val">${esc(product.color)}</span>
                 </div>
             </div>
 
             <p class="product-description-text">
-                ${product.description || 'Современный высокопроизводительный смартфон, сочетающий флагманские технологии, качественный дисплей, передовую камеру и длительное время автономной работы.'}
+                ${esc(product.description) || 'Современный высокопроизводительный смартфон, сочетающий флагманские технологии, качественный дисплей, передовую камеру и длительное время автономной работы.'}
             </p>
 
             <div class="purchase-controls">
@@ -244,11 +245,11 @@ async function initProductPage() {
                     <button type="button" onclick="changeDetailQty(1)" ${!inStock ? 'disabled' : ''}>+</button>
                 </div>
                 ${inStock ? `
-                    <button class="btn-buy-primary" onclick="addCurrentProductToCart(${product.id})">🛒 Добавить в корзину</button>
-                    <button class="btn-buy-instant" onclick="buyCurrentProductInstant(${product.id})">⚡ Купить в 1 клик</button>
+                    <button type="button" class="btn-buy-primary" onclick="addCurrentProductToCart(${product.id})">${ico('cart')} Добавить в корзину</button>
+                    <button type="button" class="btn-buy-instant" onclick="buyCurrentProductInstant(${product.id})">${ico('zap')} Купить в 1 клик</button>
                 ` : `
-                    <button class="btn-buy-primary" disabled>❌ Нет в наличии</button>
-                    <button class="btn-buy-instant" disabled>Недоступно</button>
+                    <button type="button" class="btn-buy-primary" disabled>Нет в наличии</button>
+                    <button type="button" class="btn-buy-instant" disabled>Недоступно</button>
                 `}
             </div>
         </div>
@@ -257,11 +258,131 @@ async function initProductPage() {
     if (typeof updateFavoritesUI === 'function') updateFavoritesUI();
     if (typeof updateCompareBar === 'function') updateCompareBar();
 
+    // 3D-разбор телефона (грузится лениво, не блокирует страницу)
+    renderPhoneStory(product);
+
+    // Цены в магазинах
+    if (typeof initPriceChart === 'function') initPriceChart(product);
+
     // Render Real Reviews Section
     renderReviewsSection(product.id);
 
     // Render Similar Products
     renderSimilarProducts(product);
+}
+
+// ==========================================
+// 📱 3D-РАЗБОР: разметка глав и ленивый запуск Three.js
+// Данные глав берутся только из реальных полей товара.
+// ==========================================
+function renderPhoneStory(product) {
+    const root = document.getElementById('phoneStory');
+    if (!root) return;
+
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const gl = (() => {
+        try {
+            const c = document.createElement('canvas');
+            return !!(window.WebGLRenderingContext && (c.getContext('webgl2') || c.getContext('webgl')));
+        } catch (e) { return false; }
+    })();
+    // Без WebGL секцию не показываем — все характеристики и так есть в карточке выше
+    if (!gl) return;
+
+    const name = esc(product.name);
+    const batteryFill = Math.min(1, product.battery / 6000).toFixed(3);
+    const ramFill = Math.min(1, product.ram / 16).toFixed(3);
+    const storageFill = Math.min(1, product.storage / 1024).toFixed(3);
+    const inStock = product.inStock !== false;
+    const stepTitles = ['Обзор', 'Корпус', 'Аккумулятор', 'Память', 'Дисплей', 'Итог'];
+
+    root.className = 'phone-story' + (reduce ? ' is-static' : '');
+    root.innerHTML = `
+        <div class="story-sticky">
+            <div class="story-text">
+                <span class="story-kicker">${ico('layers')} Внутри устройства</span>
+                <div class="story-steps">
+                    <article class="story-step is-active" data-step="0">
+                        <h2>Загляните внутрь <em>${name}</em></h2>
+                        <p>Листайте вниз — смартфон разберётся на части, и мы покажем, из чего он состоит и что за что отвечает.</p>
+                        <span class="story-hint"><i></i> Прокрутите страницу</span>
+                    </article>
+
+                    <article class="story-step" data-step="1">
+                        <span class="step-tag">01 · Корпус</span>
+                        <h3>${esc(product.color)}</h3>
+                        <p>Задняя панель и блок камеры. Производитель: ${esc(product.brand)}. Цвет корпуса — ${esc(product.color)}.</p>
+                    </article>
+
+                    <article class="story-step" data-step="2">
+                        <span class="step-tag">02 · Аккумулятор</span>
+                        <div class="story-big"><b data-count="${product.battery}">0</b><span>мАч</span></div>
+                        <div class="story-bar"><i data-fill="${batteryFill}"></i></div>
+                        <p style="margin-top:14px;">Ёмкость аккумулятора определяет, как долго смартфон проработает без подзарядки.</p>
+                    </article>
+
+                    <article class="story-step" data-step="3">
+                        <span class="step-tag">03 · Плата и память</span>
+                        <div class="story-metric">
+                            <div class="story-metric-row"><b><span data-count="${product.ram}" style="color:inherit;font-size:inherit;">0</span> ГБ</b><span>оперативная память</span></div>
+                            <div class="story-bar"><i data-fill="${ramFill}"></i></div>
+                        </div>
+                        <div class="story-metric">
+                            <div class="story-metric-row"><b><span data-count="${product.storage}" style="color:inherit;font-size:inherit;">0</span> ГБ</b><span>встроенная память</span></div>
+                            <div class="story-bar"><i data-fill="${storageFill}"></i></div>
+                        </div>
+                        <p>На плате — процессор и чипы памяти: от них зависят скорость работы и запас места для приложений и фото.</p>
+                    </article>
+
+                    <article class="story-step" data-step="4">
+                        <span class="step-tag">04 · Дисплей</span>
+                        <div class="story-big"><b>${esc(product.display)}</b></div>
+                        <p>Диагональ экрана. Лицевая сторона закрыта защитным стеклом, а под ним — сам дисплей.</p>
+                    </article>
+
+                    <article class="story-step" data-step="5">
+                        <span class="step-tag">05 · Всё вместе</span>
+                        <h3>${name}</h3>
+                        <p>${product.price.toLocaleString()} сом · ${inStock ? 'в наличии' : 'временно нет в наличии'}.</p>
+                        <div class="story-cta">
+                            ${inStock
+                                ? `<button type="button" class="btn btn-primary" onclick="addCurrentProductToCart(${product.id})">${ico('cart')} В корзину</button>`
+                                : ''}
+                            <button type="button" class="btn btn-ghost" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">К карточке</button>
+                        </div>
+                    </article>
+                </div>
+                <div class="story-dots" role="tablist" aria-label="Главы">
+                    ${stepTitles.map((t, i) => `<button type="button" class="story-dot${i === 0 ? ' is-active' : ''}" aria-label="${t}" title="${t}"></button>`).join('')}
+                </div>
+            </div>
+            <div class="story-canvas-wrap">
+                <canvas aria-hidden="true"></canvas>
+                <div class="story-loading">Загружаем 3D-модель…</div>
+                <div class="story-progress"><span class="story-progress-fill"></span></div>
+            </div>
+        </div>
+    `;
+    root.hidden = false;
+
+    // Three.js грузим только когда секция приблизилась к экрану
+    const start = () => {
+        const url = '/js/phone3d.js';
+        import(/* @vite-ignore */ url)
+            .then(mod => mod.mountPhoneStory(root, product))
+            .catch(err => {
+                console.warn('3D-разбор недоступен:', err);
+                root.hidden = true;
+            });
+    };
+    if ('IntersectionObserver' in window) {
+        const io = new IntersectionObserver((entries) => {
+            if (entries[0].isIntersecting) { io.disconnect(); start(); }
+        }, { rootMargin: '600px 0px' });
+        io.observe(root);
+    } else {
+        start();
+    }
 }
 
 // Scroll to reviews on rating click
@@ -271,7 +392,7 @@ function scrollToReviews() {
 }
 
 // ==========================================
-// 💬 REVIEWS SECTION RENDERING & INTERACTION
+// REVIEWS SECTION RENDERING & INTERACTION
 // ==========================================
 
 function renderReviewsSection(productId) {
@@ -299,7 +420,7 @@ function renderReviewsSection(productId) {
                 `}
             </div>
             <button class="btn-open-review-form" onclick="toggleReviewForm()">
-                ✍️ Написать отзыв
+                Написать отзыв
             </button>
         </div>
 
@@ -334,18 +455,17 @@ function renderReviewsSection(productId) {
         <div class="reviews-list" id="reviewsList">
             ${reviews.length === 0 ? `
                 <div style="text-align: center; color: var(--muted); padding: 40px 20px;">
-                    <div style="font-size: 36px; margin-bottom: 10px;">💬</div>
-                    <h4>Пока нет отзывов</h4>
+                                        <h4>Пока нет отзывов</h4>
                     <p style="font-size: 13px; margin-top: 4px;">Будьте первым, кто поделится своим мнением об этом смартфоне!</p>
                 </div>
             ` : reviews.map(r => `
                 <div class="review-card">
                     <div class="review-header">
                         <div class="review-user-info">
-                            <div class="review-avatar">${(r.author || 'П')[0].toUpperCase()}</div>
+                            <div class="review-avatar">${esc((r.author || 'П')[0].toUpperCase())}</div>
                             <div>
-                                <span class="review-author-name">${r.author}</span>
-                                <span class="review-badge-verified">✓ Покупатель</span>
+                                <span class="review-author-name">${esc(r.author)}</span>
+                                ${(r.verified || initialReviewsData.some(s => s.id === r.id)) ? '<span class="review-badge-verified">✓ Покупатель</span>' : ''}
                             </div>
                         </div>
                         <div>
@@ -353,7 +473,7 @@ function renderReviewsSection(productId) {
                             <span class="review-date" style="margin-left: 10px;">${r.date}</span>
                         </div>
                     </div>
-                    <p class="review-text">${r.text}</p>
+                    <p class="review-text">${esc(r.text)}</p>
                 </div>
             `).join('')}
         </div>
@@ -408,7 +528,23 @@ async function submitReview(e) {
         submitBtn.textContent = 'Публикация...';
     }
 
+    // Бейдж «Покупатель» — только если у пользователя есть неотменённый заказ с этим телефоном
+    let verified = false;
+    if (supabaseClient && currentUser) {
+        try {
+            const { data: mine } = await supabaseClient
+                .from('orders')
+                .select('items, status')
+                .or(REAL_ORDERS_FILTER)
+                .eq('user_id', currentUser.id);
+            verified = (mine || []).some(o =>
+                o.status !== 'Отменен' && o.status !== 'Возврат' &&
+                (o.items || []).some(i => i.id === currentProductId));
+        } catch (err) { /* бейдж просто не покажем */ }
+    }
+
     const newReview = {
+        verified,
         id: Date.now(),
         productId: currentProductId,
         author: author,
@@ -433,9 +569,15 @@ async function submitReview(e) {
                     customer_phone: String(currentProductId),
                     customer_address: newReview.text
                 });
-            if (error) console.warn('Supabase review insert warning:', error);
+            if (error) throw error;
         } catch (err) {
             console.warn('Error saving review to Supabase:', err);
+            showToast('Не удалось опубликовать отзыв. Попробуйте ещё раз.', 'error');
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Опубликовать отзыв';
+            }
+            return;
         }
     }
 
@@ -490,39 +632,7 @@ function renderSimilarProducts(current) {
     similar = similar.slice(0, 4);
 
     container.innerHTML = '';
-    similar.forEach(p => {
-        const inStock = p.inStock !== false;
-        const c = document.createElement('div');
-        c.className = 'card';
-        c.innerHTML = `
-            <div class="card-badges">
-                <button class="btn-compare" data-id="${p.id}" onclick="toggleCompare(${p.id}, event)" title="Сравнить">⚖️</button>
-                <button class="btn-fav" data-id="${p.id}" onclick="toggleFavorite(${p.id}, event)" title="В избранное">🤍</button>
-            </div>
-            <a href="product.html?id=${p.id}" class="card-img-link">
-                <img src="${p.img}" alt="${p.name}" ${!inStock ? 'style="opacity: 0.65;"' : ''}>
-            </a>
-            <a href="product.html?id=${p.id}" class="card-title-link">
-                <h3>${p.name}</h3>
-            </a>
-            <div class="card-stock ${inStock ? 'in-stock' : 'out-of-stock'}">
-                ${inStock ? '● В наличии' : '● Нет в наличии'}
-            </div>
-            <div class="specs">
-                ${p.display} • ${p.ram}/${p.storage} ГБ<br>
-                ${p.battery} мАч • ${p.color}
-            </div>
-            <div class="price">${p.price.toLocaleString()} сом</div>
-            <div class="card-actions">
-                ${inStock
-                    ? `<button class="btn-add-cart" onclick="addToCart(productsData.find(x => x.id === ${p.id}))">В корзину</button>`
-                    : `<button class="btn-add-cart" disabled>Нет в наличии</button>`
-                }
-                <a href="product.html?id=${p.id}" class="btn-details">Инфо</a>
-            </div>
-        `;
-        container.appendChild(c);
-    });
+    similar.forEach((p, i) => container.appendChild(buildProductCard(p, i)));
 
     if (typeof updateFavoritesUI === 'function') updateFavoritesUI();
     if (typeof updateCompareBar === 'function') updateCompareBar();

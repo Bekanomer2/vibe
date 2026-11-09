@@ -4,60 +4,68 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#070b1a">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Manrope:wght@500;600;700;800&display=swap">
+    <script src="js/theme.js"></script>
     <title>Все заказы — EzShop Admin</title>
     <link rel="stylesheet" href="style.css">
 </head>
 
 <body class="auth-loading admin-body">
     <div class="loader-overlay" id="pageLoader">
-        <img src="img/logo.png" alt="Loading..." class="loader-logo">
+        <img src="img/logo.png" alt="Загрузка" class="loader-logo">
     </div>
 
-    <header class="admin-header">
-        <a href="index.html" class="logo">
-            <img src="img/logo.png" alt="EzShop Logo">
-        </a>
-        <div class="admin-header-title">
-            <span class="admin-badge">Admin</span>
-            <h2>Управление заказами</h2>
-        </div>
-        <nav id="nav">
-            <a href="admin.html">📱 Каталог и бренды</a>
-            <a href="index.html">🛍️ В магазин</a>
-            <div class="user-panel">
-                <span id="usernameDisplay">Администратор</span>
-                <button onclick="logout()" class="admin-logout-btn">Выход</button>
+    <header class="site-header admin-header">
+        <div class="header-inner">
+            <a href="index.html" class="logo" aria-label="EzShop — в магазин">
+                <img src="img/logo.png" alt="EzShop">
+            </a>
+            <div class="admin-header-title">
+                <span class="admin-badge">Admin</span>
+                <h2>Управление заказами</h2>
             </div>
-        </nav>
-        <div class="burger" id="burger"><span></span><span></span><span></span></div>
+            <nav id="nav" class="main-nav" aria-label="Меню администратора">
+                <a href="admin.html" data-icon="phone">Каталог и бренды</a>
+                <a href="admin-orders.html" data-icon="package">Все заказы</a>
+                <a href="index.html" data-icon="store">В магазин</a>
+                <div class="user-panel">
+                    <span id="usernameDisplay">Администратор</span>
+                    <button type="button" onclick="logout()" class="admin-logout-btn">Выход</button>
+                </div>
+            </nav>
+            <div class="burger" id="burger"><span></span><span></span><span></span></div>
+        </div>
     </header>
 
     <div class="admin-container">
         <!-- Сводная статистика заказов -->
         <div class="admin-stats-grid">
             <div class="stat-card">
-                <div class="stat-icon">📦</div>
+                <div class="stat-icon" data-icon="package"></div>
                 <div class="stat-info">
                     <span class="stat-label">Всего заказов</span>
                     <h3 id="statOrdersCount">0</h3>
                 </div>
             </div>
             <div class="stat-card">
-                <div class="stat-icon">💰</div>
+                <div class="stat-icon ok" data-icon="wallet"></div>
                 <div class="stat-info">
                     <span class="stat-label">Выручка (сумма заказов)</span>
                     <h3 id="statOrdersRevenue">0 сом</h3>
                 </div>
             </div>
             <div class="stat-card">
-                <div class="stat-icon">🔨</div>
+                <div class="stat-icon" data-icon="wrench"></div>
                 <div class="stat-info">
                     <span class="stat-label">В работе (активные)</span>
                     <h3 id="statOrdersProcessing">0</h3>
                 </div>
             </div>
             <div class="stat-card">
-                <div class="stat-icon">🔄</div>
+                <div class="stat-icon bad" data-icon="refresh"></div>
                 <div class="stat-info">
                     <span class="stat-label">Оформлено возвратов</span>
                     <h3 id="statOrdersReturns">0</h3>
@@ -70,18 +78,18 @@
             <div class="orders-filter-bar">
                 <div class="orders-search-box">
                     <label for="orderPhoneSearch">Поиск по номеру телефона:</label>
-                    <input type="text" id="orderPhoneSearch" class="admin-input" placeholder="📞 Введите номер: +996... или 077..." oninput="filterAdminOrders()">
+                    <input type="text" id="orderPhoneSearch" class="admin-input" placeholder="Введите номер: +996... или 077..." oninput="filterAdminOrders()">
                 </div>
 
                 <div class="orders-filter-box">
                     <label for="orderStatusFilter">Фильтр по статусу:</label>
                     <select id="orderStatusFilter" class="admin-input" onchange="filterAdminOrders()">
                         <option value="all">Все статусы</option>
-                        <option value="В обработке">⏳ В обработке</option>
-                        <option value="В работе">🔨 В работе</option>
-                        <option value="Доставлен">✅ Доставлен</option>
-                        <option value="Возврат">🔄 Возврат</option>
-                        <option value="Отменен">❌ Отменен</option>
+                        <option value="В обработке">В обработке</option>
+                        <option value="В работе">В работе</option>
+                        <option value="Доставлен">Доставлен</option>
+                        <option value="Возврат">Возврат</option>
+                        <option value="Отменен">Отменен</option>
                     </select>
                 </div>
 
@@ -96,7 +104,7 @@
                 </div>
 
                 <button class="btn-refresh-orders" onclick="loadAllOrdersFromDB()" title="Обновить список из базы данных">
-                    🔄 Обновить
+                    <span data-icon="refresh"></span>Обновить
                 </button>
             </div>
         </div>
@@ -104,7 +112,7 @@
         <!-- Список всех заказов -->
         <div class="admin-table-panel">
             <div class="panel-header">
-                <h3>📋 Все поступившие заказы</h3>
+                <h3><span data-icon="list"></span>Все поступившие заказы</h3>
                 <span style="font-size: 13px; color: var(--muted);">Найдено: <b id="filteredOrdersCount">0</b></span>
             </div>
 
@@ -121,9 +129,11 @@
     <!-- Модульные скрипты -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/config.js"></script>
+    <script src="js/icons.js"></script>
     <script src="js/products-data.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/admin-orders.js"></script>
+    <script src="js/ui.js"></script>
     <script src="js/main.js"></script>
 </body>
 

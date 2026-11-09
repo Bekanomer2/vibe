@@ -4,6 +4,14 @@
 
 let allOrdersList = [];
 
+// Приводит телефон к виду без кода страны и ведущего нуля: +996555123456, 996555123456 и 0555123456 -> 555123456
+function normalizePhone(value) {
+    let digits = String(value || '').replace(/\D/g, '');
+    if (digits.startsWith('996')) digits = digits.slice(3);
+    else if (digits.startsWith('0')) digits = digits.slice(1);
+    return digits;
+}
+
 async function initAdminOrdersPage() {
     if (!isAdmin(currentUser)) {
         showToast('Доступ запрещен. Страница доступна только администраторам!', 'error');
@@ -26,6 +34,7 @@ async function loadAllOrdersFromDB() {
         const { data: orders, error } = await supabaseClient
             .from('orders')
             .select('*')
+            .or(REAL_ORDERS_FILTER)
             .order('id', { ascending: false });
 
         if (error) throw error;
@@ -69,7 +78,7 @@ function updateOrdersStats() {
 
 function filterAdminOrders() {
     const phoneSearch = document.getElementById('orderPhoneSearch')?.value.trim().toLowerCase() || '';
-    const cleanSearch = phoneSearch.replace(/[\s\-\(\)\+]/g, '');
+    const cleanSearch = normalizePhone(phoneSearch);
     const statusFilter = document.getElementById('orderStatusFilter')?.value || 'all';
     const sortFilter = document.getElementById('orderSortFilter')?.value || 'date_desc';
 
@@ -78,14 +87,13 @@ function filterAdminOrders() {
     // 1. Поиск по номеру телефона
     if (cleanSearch) {
         list = list.filter(o => {
-            const phone = (o.customer_phone || '').replace(/[\s\-\(\)\+]/g, '').toLowerCase();
-            return phone.includes(cleanSearch);
+            return normalizePhone(o.customer_phone).includes(cleanSearch);
         });
     }
 
     // 2. Фильтрация по статусу
     if (statusFilter !== 'all') {
-        list = list.filter(o => (o.status || 'В работе') === statusFilter);
+        list = list.filter(o => (o.status || 'В обработке') === statusFilter);
     }
 
     // 3. Сортировка по дате или сумме
@@ -157,26 +165,22 @@ function renderAdminOrdersList(orders) {
             <div class="admin-order-details-grid">
                 <!-- Данные клиента -->
                 <div class="admin-order-client-box">
-                    <div style="font-size:11px; text-transform:uppercase; letter-spacing:0.5px; color:var(--accent); font-weight:700; margin-bottom:6px;">Клиент и доставка</div>
-                    <div><b>👤 Получатель:</b> ${o.customer_name || 'Не указано'}</div>
-                    <div style="margin: 4px 0;">
-                        <b>📞 Телефон:</b> 
-                        <a href="tel:${o.customer_phone}" style="color:var(--accent); font-weight:700; text-decoration:underline;">
-                            ${o.customer_phone || 'Не указан'}
-                        </a>
-                    </div>
-                    <div><b>📍 Адрес:</b> ${o.customer_address || 'Самовывоз / Не указан'}</div>
+                    <span class="client-label">Клиент и доставка</span>
+                    <div class="info-line">${ico('user')}<span><b>Получатель:</b> ${esc(o.customer_name || 'Не указано')}</span></div>
+                    <div class="info-line">${ico('phone')}<span><b>Телефон:</b>
+                        <a href="tel:${esc(o.customer_phone)}" style="color:var(--accent); font-weight:700; text-decoration:underline;">${esc(o.customer_phone || 'Не указан')}</a></span></div>
+                    <div class="info-line">${ico('map-pin')}<span><b>Адрес:</b> ${esc(o.customer_address || 'Самовывоз / Не указан')}</span></div>
                 </div>
 
                 <!-- Управление статусом прямо из карточки (Администратор может выставить любой статус) -->
                 <div class="admin-order-status-change-box">
                     <div style="font-size:11px; text-transform:uppercase; letter-spacing:0.5px; color:var(--muted); font-weight:700; margin-bottom:6px;">Сменить статус заказа:</div>
                     <select class="admin-status-select" onchange="changeOrderStatusFromAdmin(${o.id}, this.value)">
-                        <option value="В обработке" ${statusText === 'В обработке' ? 'selected' : ''}>⏳ В обработке</option>
-                        <option value="В работе" ${statusText === 'В работе' ? 'selected' : ''}>🔨 В работе</option>
-                        <option value="Доставлен" ${statusText === 'Доставлен' ? 'selected' : ''}>✅ Доставлен</option>
-                        <option value="Возврат" ${statusText === 'Возврат' ? 'selected' : ''}>🔄 Возврат</option>
-                        <option value="Отменен" ${statusText === 'Отменен' ? 'selected' : ''}>❌ Отменен</option>
+                        <option value="В обработке" ${statusText === 'В обработке' ? 'selected' : ''}>В обработке</option>
+                        <option value="В работе" ${statusText === 'В работе' ? 'selected' : ''}>В работе</option>
+                        <option value="Доставлен" ${statusText === 'Доставлен' ? 'selected' : ''}>Доставлен</option>
+                        <option value="Возврат" ${statusText === 'Возврат' ? 'selected' : ''}>Возврат</option>
+                        <option value="Отменен" ${statusText === 'Отменен' ? 'selected' : ''}>Отменен</option>
                     </select>
                 </div>
             </div>
@@ -210,7 +214,7 @@ async function changeOrderStatusFromAdmin(orderId, newStatus) {
 
     const target = allOrdersList.find(o => o.id === orderId);
     if (!target) return;
-    if ((target.status || 'В работе') === newStatus) return;
+    if ((target.status || 'В обработке') === newStatus) return;
 
     try {
         // Подготавливаем обновленные items с новым _tracked_status для синхронизации с Telegram
@@ -254,10 +258,6 @@ async function changeOrderStatusFromAdmin(orderId, newStatus) {
         updateOrdersStats();
         filterAdminOrders();
     } catch (err) {
-        console.error('Error updating order status:', err);
-        showToast('Ошибка обновления статуса: ' + err.message, 'error');
-    }
-}
         console.error('Error updating order status:', err);
         showToast('Ошибка обновления статуса: ' + err.message, 'error');
     }

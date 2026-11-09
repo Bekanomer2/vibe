@@ -1,46 +1,72 @@
-/* ==========================================
-   Orders Page Styles (orders.html)
-   ========================================== */
+/* =========================================================
+   Страница заказов (orders.html и список в админке)
+   ========================================================= */
 .orders-container {
-    max-width: 860px;
+    max-width: 960px;
     margin: 0 auto;
-    padding: 30px 20px;
+    padding: 32px var(--gutter) 40px;
 }
 
-.orders-page-header {
-    margin-bottom: 30px;
+.orders-page-header,
+.page-head {
+    margin-bottom: 28px;
 }
 
 .back-link {
-    display: inline-block;
-    color: var(--accent);
-    margin-bottom: 12px;
-    font-size: 14px;
-    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 14px;
+    padding: 8px 14px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--ov-2);
+    color: var(--text-soft);
+    font-size: 13.5px;
+    font-weight: 700;
+    transition: all var(--dur-1);
 }
 
-.orders-page-header h1 {
-    font-size: 28px;
+.back-link:hover {
+    color: var(--text-strong);
+    border-color: var(--accent);
+    transform: translateX(-3px);
+}
+
+.orders-page-header h1,
+.page-head h1 {
+    font-size: clamp(28px, 3.4vw, 44px);
+    font-weight: 800;
+    letter-spacing: -0.035em;
     margin-bottom: 6px;
 }
 
 .orders-subtitle {
     color: var(--muted);
-    font-size: 14px;
+    font-size: 15px;
 }
 
 .orders-list {
     display: flex;
     flex-direction: column;
-    gap: 24px;
+    gap: 18px;
 }
 
 .order-card {
-    background: #0f172a;
-    border: 1px solid var(--border);
-    border-radius: 18px;
-    padding: 24px;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    padding: clamp(18px, 2.4vw, 28px);
+    border-radius: var(--r-xl);
+    background: var(--glass);
+    -webkit-backdrop-filter: blur(14px);
+    backdrop-filter: blur(14px);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--shadow-sm);
+    animation: cardIn .55s var(--ease-out) both;
+    transition: border-color var(--dur-2), box-shadow var(--dur-2);
+}
+
+.order-card:hover {
+    border-color: color-mix(in srgb, var(--accent) 35%, transparent);
+    box-shadow: var(--shadow-md);
 }
 
 .order-header {
@@ -53,10 +79,12 @@
 }
 
 .order-id {
-    font-size: 18px;
-    font-weight: 800;
-    color: #fff;
     margin-right: 12px;
+    font-family: var(--font-display);
+    font-size: 19px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--text-strong);
 }
 
 .order-date {
@@ -65,172 +93,158 @@
 }
 
 .order-status-badge {
-    padding: 6px 14px;
-    border-radius: 999px;
-    font-size: 13px;
-    font-weight: 700;
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 7px;
+    padding: 7px 14px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.order-status-badge svg {
+    width: 16px;
+    height: 16px;
 }
 
 .status-pending {
-    background: rgba(245, 158, 11, 0.15);
+    background: color-mix(in srgb, var(--warning) 14%, transparent);
     color: var(--warning);
-    border: 1px solid rgba(245, 158, 11, 0.35);
+    border: 1px solid color-mix(in srgb, var(--warning) 35%, transparent);
 }
 
 .status-processing {
-    background: rgba(56, 189, 248, 0.15);
+    background: color-mix(in srgb, var(--accent) 14%, transparent);
     color: var(--accent);
-    border: 1px solid rgba(56, 189, 248, 0.3);
+    border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
 }
 
 .status-delivered {
-    background: rgba(16, 185, 129, 0.15);
+    background: color-mix(in srgb, var(--success) 14%, transparent);
     color: var(--success);
-    border: 1px solid rgba(16, 185, 129, 0.3);
+    border: 1px solid color-mix(in srgb, var(--success) 35%, transparent);
 }
 
 .status-return {
-    background: rgba(249, 115, 22, 0.15);
+    background: color-mix(in srgb, var(--return-color) 14%, transparent);
     color: var(--return-color);
-    border: 1px solid rgba(249, 115, 22, 0.4);
+    border: 1px solid color-mix(in srgb, var(--return-color) 40%, transparent);
 }
 
 .status-cancelled {
-    background: rgba(239, 68, 68, 0.15);
+    background: color-mix(in srgb, var(--danger) 14%, transparent);
     color: var(--danger);
-    border: 1px solid rgba(239, 68, 68, 0.3);
+    border: 1px solid color-mix(in srgb, var(--danger) 35%, transparent);
 }
 
-/* Order Tracker Steps */
+/* ---------- Трекер статуса ---------- */
 .order-tracker {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    background: #020617;
-    border: 1px solid var(--border);
-    padding: 14px 18px;
-    border-radius: 14px;
-    margin-bottom: 20px;
-    box-sizing: border-box;
     width: 100%;
+    padding: 16px 20px;
+    margin-bottom: 20px;
+    border-radius: var(--r-lg);
+    background: var(--ov-1);
+    border: 1px solid var(--border);
 }
 
 .tracker-step {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
     flex: 0 0 auto;
     text-align: center;
 }
 
 .tracker-dot {
-    width: 14px;
-    height: 14px;
+    position: relative;
+    width: 16px;
+    height: 16px;
     border-radius: 50%;
-    background: #334155;
-    transition: 0.3s;
+    background: var(--border-strong);
+    transition: background var(--dur-2), box-shadow var(--dur-2);
     flex-shrink: 0;
 }
 
 .tracker-label {
     font-size: 12px;
+    font-weight: 600;
     color: var(--muted);
-    font-weight: 500;
     white-space: nowrap;
 }
 
 .tracker-line {
+    position: relative;
     flex: 1 1 0%;
     min-width: 10px;
-    height: 2px;
-    background: #334155;
-    margin: 0 8px;
-    margin-bottom: 20px;
+    height: 3px;
+    margin: 0 8px 22px;
+    border-radius: 3px;
+    background: var(--border-strong);
+    overflow: hidden;
+}
+
+.tracker-line.active {
+    background: var(--grad);
+}
+
+.tracker-line.active::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    width: 40%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .6), transparent);
+    animation: trackRun 2.4s ease-in-out infinite;
+}
+
+@keyframes trackRun {
+    from { transform: translateX(-120%); }
+    to { transform: translateX(300%); }
 }
 
 .tracker-step.active .tracker-dot {
     background: var(--accent);
-    box-shadow: 0 0 10px var(--accent);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 22%, transparent), 0 0 14px color-mix(in srgb, var(--accent) 60%, transparent);
 }
 
 .tracker-step.active .tracker-label {
-    color: var(--text);
-    font-weight: 700;
+    color: var(--text-strong);
+    font-weight: 800;
 }
 
 .tracker-step.active.done .tracker-dot {
     background: var(--success);
-    box-shadow: 0 0 10px var(--success);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--success) 22%, transparent), 0 0 14px color-mix(in srgb, var(--success) 60%, transparent);
 }
 
 .tracker-step.active.return .tracker-dot {
     background: var(--return-color);
-    box-shadow: 0 0 10px var(--return-color);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--return-color) 22%, transparent), 0 0 14px color-mix(in srgb, var(--return-color) 60%, transparent);
 }
 
 .tracker-step.active.cancelled .tracker-dot {
     background: var(--danger);
-    box-shadow: 0 0 10px var(--danger);
-}
-
-.tracker-line.active {
-    background: var(--accent);
-}
-
-/* Mobile Responsive Optimizations for Orders */
-@media (max-width: 580px) {
-    .orders-container {
-        padding: 16px 12px 100px;
-    }
-
-    .order-card {
-        padding: 16px 12px;
-        border-radius: 14px;
-    }
-
-    .order-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 8px;
-    }
-
-    .order-tracker {
-        padding: 12px 8px;
-        gap: 2px;
-    }
-
-    .tracker-dot {
-        width: 10px;
-        height: 10px;
-    }
-
-    .tracker-line {
-        margin: 0 4px;
-        min-width: 6px;
-        margin-bottom: 16px;
-    }
-
-    .tracker-label {
-        font-size: 10px;
-        letter-spacing: -0.2px;
-    }
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--danger) 22%, transparent), 0 0 14px color-mix(in srgb, var(--danger) 60%, transparent);
 }
 
 .order-customer-info {
-    font-size: 13px;
-    color: var(--muted);
-    background: rgba(255, 255, 255, 0.02);
-    border: 1px dashed var(--border);
-    padding: 12px 16px;
-    border-radius: 10px;
-    margin-bottom: 16px;
     display: flex;
     flex-direction: column;
     gap: 4px;
+    margin-bottom: 16px;
+    padding: 14px 18px;
+    border-radius: var(--r-md);
+    background: var(--ov-1);
+    border: 1px dashed var(--border-strong);
+    font-size: 13.5px;
+    color: var(--muted);
+}
+
+.order-customer-info b {
+    color: var(--text-soft);
 }
 
 .order-items {
@@ -243,23 +257,79 @@
 .order-item {
     display: flex;
     justify-content: space-between;
-    font-size: 14px;
-    color: #cbd5e1;
+    gap: 12px;
     padding-bottom: 8px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    border-bottom: 1px solid var(--border);
+    font-size: 14.5px;
+    color: var(--text-soft);
+}
+
+.order-item b {
+    color: var(--text-strong);
+    white-space: nowrap;
 }
 
 .order-total-footer {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-top: 1px solid var(--border);
     padding-top: 14px;
-    font-size: 16px;
+    border-top: 1px solid var(--border);
+    font-size: 15px;
+    color: var(--muted);
 }
 
 .order-total-sum {
-    font-size: 20px;
-    font-weight: 900;
-    color: var(--accent);
+    font-family: var(--font-display);
+    font-size: 24px;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    color: var(--text-strong);
+}
+
+@media (max-width: 580px) {
+    .orders-container {
+        padding: 18px 14px 24px;
+    }
+
+    .order-card {
+        padding: 16px 14px;
+        border-radius: 22px;
+    }
+
+    .order-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .order-tracker {
+        padding: 12px 8px;
+    }
+
+    .tracker-dot {
+        width: 12px;
+        height: 12px;
+    }
+
+    .tracker-line {
+        margin: 0 4px 18px;
+        min-width: 6px;
+    }
+
+    .tracker-label {
+        font-size: 10px;
+        letter-spacing: -0.2px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .order-card {
+        animation: none;
+    }
+
+    .tracker-line.active::after {
+        animation: none;
+        display: none;
+    }
 }

@@ -73,7 +73,7 @@ function updateCompareBar() {
     const comp = getCompareIds();
     const bar = document.getElementById('compareBar');
     const navCount = document.getElementById('navCompareCount');
-    if (navCount) navCount.textContent = comp.length;
+    if (navCount) navCount.textContent = comp.filter(id => productsData.some(p => p.id === id)).length;
 
     if (bar) {
         if (comp.length > 0) {
@@ -108,7 +108,7 @@ function openCompareModal() {
         if (modal && modal.style.display === 'flex') {
             closeCompareModal();
         } else {
-            showToast('Добавьте хотя бы один смартфон для сравнения (иконка ⚖️)', 'info');
+            showToast('Добавьте хотя бы один смартфон для сравнения (кнопка с весами на карточке)', 'info');
         }
         return;
     }
@@ -122,70 +122,53 @@ function openCompareModal() {
 
     if (!container || !modal) return;
 
-    let html = `
+    const E = (v) => escapeHtml(v);
+    const bestOf = (vals, dir) => {
+        if (vals.length < 2) return new Set();
+        const target = dir === 'min' ? Math.min(...vals) : Math.max(...vals);
+        if (vals.every(v => v === target)) return new Set();
+        return new Set(vals.map((v, i) => (v === target ? i : -1)).filter(i => i >= 0));
+    };
+    const cells = (arr, best) => arr.map((c, i) => {
+        const isBest = best && best.has(i);
+        return `<td class="${isBest ? 'is-best' : ''}">${c}${isBest ? '<span class="best-badge">лучшее</span>' : ''}</td>`;
+    }).join('');
+    const row = (label, arr, best) => `<tr><th scope="row">${label}</th>${cells(arr, best)}</tr>`;
+    const inStockOf = (p) => p.inStock !== false;
+
+    const html = `
         <table class="compare-table">
             <thead>
                 <tr>
-                    <th style="min-width: 140px;">Параметр</th>
+                    <th class="compare-corner" scope="col">Параметр</th>
                     ${items.map(p => `
-                        <th>
+                        <th scope="col">
                             <div class="compare-th-card">
-                                <img src="${p.img}" alt="${p.name}">
-                                <h4>${p.name}</h4>
-                                <div class="compare-price">${p.price.toLocaleString()} сом</div>
-                                <button class="btn-compare-remove" onclick="removeFromCompareModal(${p.id})">✕ Убрать</button>
+                                <button type="button" class="btn-compare-remove" onclick="removeFromCompareModal(${p.id})" aria-label="Убрать ${E(p.name)} из сравнения" title="Убрать">&times;</button>
+                                <a href="product.html?id=${p.id}"><img src="${E(p.img)}" alt="${E(p.name)}"></a>
+                                <h4>${E(p.name)}</h4>
                             </div>
                         </th>
                     `).join('')}
                 </tr>
             </thead>
             <tbody>
-                <tr>
-                    <td><b>Наличие</b></td>
-                    ${items.map(p => `
-                        <td>
-                            ${p.inStock !== false
-                                ? '<span style="color: var(--success); font-weight: 700;">● В наличии</span>'
-                                : '<span style="color: #ef4444; font-weight: 700;">● Нет в наличии</span>'}
-                        </td>
-                    `).join('')}
-                </tr>
-                <tr>
-                    <td><b>Бренд</b></td>
-                    ${items.map(p => `<td>${p.brand}</td>`).join('')}
-                </tr>
-                <tr>
-                    <td><b>Дисплей</b></td>
-                    ${items.map(p => `<td><b>${p.display}</b></td>`).join('')}
-                </tr>
-                <tr>
-                    <td><b>ОЗУ (RAM)</b></td>
-                    ${items.map(p => `<td><b>${p.ram} ГБ</b></td>`).join('')}
-                </tr>
-                <tr>
-                    <td><b>Память (ROM)</b></td>
-                    ${items.map(p => `<td><b>${p.storage} ГБ</b></td>`).join('')}
-                </tr>
-                <tr>
-                    <td><b>Аккумулятор</b></td>
-                    ${items.map(p => `<td>${p.battery} мАч</td>`).join('')}
-                </tr>
-                <tr>
-                    <td><b>Цвет</b></td>
-                    ${items.map(p => `<td>${p.color}</td>`).join('')}
-                </tr>
-                <tr>
-                    <td><b>Действие</b></td>
-                    ${items.map(p => `
-                        <td>
-                            ${p.inStock !== false
-                                ? `<button class="auth-btn" style="padding: 8px 12px; font-size: 13px;" onclick="addToCart(productsData.find(x => x.id === ${p.id}))">В корзину</button>`
-                                : `<button class="auth-btn" style="padding: 8px 12px; font-size: 13px; background: #334155; color: #94a3b8; cursor: not-allowed;" disabled>Нет в наличии</button>`}
-                        </td>
-                    `).join('')}
-                </tr>
+                ${row('Цена', items.map(p => `<b class="compare-price">${p.price.toLocaleString()} сом</b>`), bestOf(items.map(p => p.price), 'min'))}
+                ${row('Наличие', items.map(p => inStockOf(p)
+                    ? '<span class="cmp-ok">В наличии</span>'
+                    : '<span class="cmp-no">Нет в наличии</span>'))}
+                ${row('Бренд', items.map(p => E(p.brand)))}
+                ${row('Дисплей', items.map(p => `<b>${E(p.display)}</b>`), bestOf(items.map(p => parseFloat(p.display) || 0), 'max'))}
+                ${row('ОЗУ (RAM)', items.map(p => `<b>${p.ram} ГБ</b>`), bestOf(items.map(p => p.ram), 'max'))}
+                ${row('Память (ROM)', items.map(p => `<b>${p.storage} ГБ</b>`), bestOf(items.map(p => p.storage), 'max'))}
+                ${row('Аккумулятор', items.map(p => `<b>${p.battery} мАч</b>`), bestOf(items.map(p => p.battery), 'max'))}
+                ${row('Цвет', items.map(p => E(p.color)))}
+                ${row('', items.map(p => inStockOf(p)
+                    ? `<button type="button" class="btn-add-cart" onclick="addToCart(productsData.find(x => x.id === ${p.id}))">В корзину</button>`
+                    : `<button type="button" class="btn-add-cart" disabled>Нет в наличии</button>`))}
             </tbody>
         </table>
+        <p class="compare-legend"><i></i> Лучшее значение в строке подсвечено</p>
     `;
 
     container.innerHTML = html;

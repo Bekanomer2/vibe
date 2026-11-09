@@ -3,6 +3,7 @@
 // ==========================================
 
 let cart = [];
+const MAX_CART_QTY = 10;
 
 function loadCart() {
     if (!currentUser) return;
@@ -35,7 +36,7 @@ function addToCart(p, qty = 1) {
     }
     const item = cart.find(i => i.id === p.id);
     if (item) {
-        item.qty += qty;
+        item.qty = Math.min(MAX_CART_QTY, item.qty + qty);
     } else {
         cart.push({ ...p, qty: qty });
     }
@@ -58,14 +59,14 @@ function quickBuy(p, qty = 1) {
 // Telegram Order Notification with "Возврат" status
 async function sendTelegramNotification(order) {
     const message = `
-📦 <b>Новый заказ #${order.id} от "${order.username}"</b>
+📦 <b>Новый заказ #${order.id} от "${escapeHtml(order.username)}"</b>
 
-👤 <b>Клиент:</b> ${order.customer_name}
-📞 <b>Телефон:</b> ${order.customer_phone}
-📍 <b>Адрес:</b> ${order.customer_address}
+👤 <b>Клиент:</b> ${escapeHtml(order.customer_name)}
+📞 <b>Телефон:</b> ${escapeHtml(order.customer_phone)}
+📍 <b>Адрес:</b> ${escapeHtml(order.customer_address)}
 
 🛒 <b>Товары:</b>
-${order.items.map(i => `- ${i.name} (x${i.qty})`).join('\n')}
+${order.items.map(i => `- ${escapeHtml(i.name)} (x${i.qty})`).join('\n')}
 
 💰 <b>Итого: ${order.total.toLocaleString()} сом</b>
     `;
@@ -128,44 +129,51 @@ function renderCart() {
     let total = 0;
 
     if (cart.length === 0) {
-        itemsEl.innerHTML = '<p style="text-align:center; color: var(--muted); padding: 40px;">Ваша корзина пуста</p>';
-        totalEl.innerHTML = 'Итого: 0 сом';
+        itemsEl.innerHTML = `
+            <div class="cart-empty">
+                <div class="empty-ico">${ico('cart')}</div>
+                <h3>Ваша корзина пуста</h3>
+                <p>Добавьте смартфоны из каталога — они появятся здесь.</p>
+                <a href="index.html" class="btn btn-primary">Перейти в каталог</a>
+            </div>`;
+        totalEl.innerHTML = '<span>Итого</span><b>0 сом</b>';
         const checkoutBtn = document.getElementById('checkout');
         if (checkoutBtn) checkoutBtn.style.display = 'none';
         return;
     }
 
     const checkoutBtn = document.getElementById('checkout');
-    if (checkoutBtn) checkoutBtn.style.display = 'inline-block';
+    if (checkoutBtn) checkoutBtn.style.display = 'inline-flex';
 
     cart.forEach(item => {
         total += item.price * item.qty;
         const row = document.createElement('div');
         row.className = 'cart-item';
+        row.style.setProperty('--i', Math.min(cart.indexOf(item), 8));
         row.innerHTML = `
-            <img src="${item.img}" style="width:60px; height:60px; object-fit:cover; border-radius:8px;">
-            <div style="flex:1;">
-                <h4 style="margin:0;">${item.name}</h4>
-                <small style="color:var(--muted);">${item.price.toLocaleString()} сом</small>
+            <img class="cart-thumb" src="${esc(item.img)}" alt="${esc(item.name)}">
+            <div class="cart-item-info">
+                <h4>${esc(item.name)}</h4>
+                <small>${item.price.toLocaleString()} сом</small>
             </div>
             <div class="cart-qty-ctrl">
-                <button onclick="updateQty(${item.id}, -1)">-</button>
+                <button type="button" onclick="updateQty(${item.id}, -1)" aria-label="Уменьшить количество">−</button>
                 <span>${item.qty}</span>
-                <button onclick="updateQty(${item.id}, 1)">+</button>
+                <button type="button" onclick="updateQty(${item.id}, 1)" aria-label="Увеличить количество">+</button>
             </div>
-            <div style="font-weight:700;">${(item.price * item.qty).toLocaleString()} сом</div>
-            <button onclick="removeFromCart(${item.id})" class="btn-remove-item">✕</button>
+            <div class="cart-line-total">${(item.price * item.qty).toLocaleString()} сом</div>
+            <button type="button" onclick="removeFromCart(${item.id})" class="btn-remove-item" aria-label="Удалить из корзины" title="Удалить">${ico('trash')}</button>
         `;
         itemsEl.appendChild(row);
     });
 
-    totalEl.innerHTML = `Итого: <span style="color: var(--accent); font-weight: 800;">${total.toLocaleString()} сом</span>`;
+    totalEl.innerHTML = `<span>Итого</span><b>${total.toLocaleString()} сом</b>`;
 }
 
 function updateQty(id, delta) {
     const item = cart.find(i => i.id === id);
     if (!item) return;
-    item.qty += delta;
+    item.qty = Math.min(MAX_CART_QTY, item.qty + delta);
     if (item.qty <= 0) {
         cart = cart.filter(i => i.id !== id);
     }
@@ -225,11 +233,38 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
+            // Актуализируем корзину по текущему каталогу: цены и наличие могли измениться
+            const oldTotal = cart.reduce((s, i) => s + i.price * i.qty, 0);
+            const unavailable = [];
+            cart = cart.reduce((acc, i) => {
+                const fresh = productsData.find(p => p.id === i.id);
+                if (!fresh || fresh.inStock === false) {
+                    unavailable.push(i.name);
+                } else {
+                    acc.push({ ...fresh, qty: i.qty });
+                }
+                return acc;
+            }, []);
+            const newTotal = cart.reduce((s, i) => s + i.price * i.qty, 0);
+
+            if (unavailable.length > 0 || newTotal !== oldTotal) {
+                saveCart();
+                showToast(
+                    unavailable.length > 0
+                        ? `Нет в наличии и убрано из корзины: ${unavailable.join(', ')}`
+                        : 'Цены в корзине изменились. Проверьте сумму и подтвердите заказ ещё раз.',
+                    'error'
+                );
+                return;
+            }
+
+            sendBtn.disabled = true;
             try {
                 // Get user order count for user-friendly order ID
                 const { data: userOrders } = await supabaseClient
                     .from('orders')
                     .select('user_order_id, status')
+                    .or(REAL_ORDERS_FILTER)
                     .eq('user_id', currentUser.id);
 
                 const realUserOrders = (userOrders || []).filter(o => !String(o.status || '').startsWith('__'));
@@ -275,6 +310,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     window.location.href = 'orders.html';
                 }, 1000);
             } catch (err) {
+                sendBtn.disabled = false;
                 showToast(err.message, 'error');
             }
         };

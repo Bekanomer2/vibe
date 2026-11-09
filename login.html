@@ -4,177 +4,167 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#070b1a">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Manrope:wght@500;600;700;800&display=swap">
+    <script src="js/theme.js"></script>
     <title>Вход — EzShop</title>
     <link rel="stylesheet" href="style.css">
-    <style>
-        .auth-container {
-            max-width: 400px;
-            margin: 100px auto;
-            background: #111827;
-            padding: 30px;
-            border-radius: 20px;
-            border: 1px solid #1e293b;
-        }
-
-        .auth-tabs {
-            display: flex;
-            margin-bottom: 20px;
-            border-bottom: 1px solid #1e293b;
-        }
-
-        .auth-tab {
-            flex: 1;
-            padding: 10px;
-            text-align: center;
-            cursor: pointer;
-            color: var(--muted);
-            font-weight: 600;
-        }
-
-        .auth-tab.active {
-            color: var(--accent);
-            border-bottom: 2px solid var(--accent);
-        }
-
-        .auth-form {
-            display: none;
-            flex-direction: column;
-            gap: 15px;
-        }
-
-        .auth-form.active {
-            display: flex;
-        }
-
-        .auth-input {
-            width: 100%;
-            padding: 12px;
-            background: #020617;
-            border: 1px solid #1e293b;
-            color: var(--text);
-            border-radius: 8px;
-            box-sizing: border-box;
-        }
-
-        .auth-input:focus {
-            border-color: var(--accent);
-            outline: none;
-        }
-
-        .password-wrapper {
-            position: relative;
-            display: flex;
-            align-items: center;
-        }
-
-        .toggle-password {
-            position: absolute;
-            right: 10px;
-            background: none;
-            border: none;
-            cursor: pointer;
-            color: var(--muted);
-            padding: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.1rem;
-        }
-
-        .auth-btn {
-            width: 100%;
-            padding: 12px;
-            background: var(--accent);
-            color: #020617;
-            border: none;
-            border-radius: 8px;
-            font-weight: 800;
-            cursor: pointer;
-            margin-top: 10px;
-        }
-
-        .admin-hint {
-            margin-top: 18px;
-            padding-top: 14px;
-            border-top: 1px dashed #1e293b;
-            font-size: 12px;
-            color: var(--muted);
-            text-align: center;
-        }
-    </style>
 </head>
 
 <body>
     <div class="loader-overlay" id="pageLoader">
-        <img src="img/logo.png" alt="Loading..." class="loader-logo">
+        <img src="img/logo.png" alt="Загрузка" class="loader-logo">
     </div>
 
-    <div class="auth-container">
-        <div style="text-align: center; margin-bottom: 20px;">
-            <img src="img/logo.png" alt="EzShop" style="height: 100px; width: auto;">
-        </div>
-
-        <div class="auth-tabs">
-            <div class="auth-tab active" onclick="switchTab('login')">Вход</div>
-            <div class="auth-tab" onclick="switchTab('register')">Регистрация</div>
-        </div>
-
-        <!-- Login Form -->
-        <form id="loginForm" class="auth-form active" onsubmit="handleLogin(event)">
-            <input type="email" id="loginInput" class="auth-input" placeholder="Email" required>
-            <div class="password-wrapper">
-                <input type="password" id="loginPass" class="auth-input" placeholder="Пароль" required>
-                <button type="button" class="toggle-password" onclick="togglePassword('loginPass')">👁️</button>
+    <main class="auth-page">
+        <!-- Левая витрина (только на широких экранах) -->
+        <section class="auth-showcase" aria-hidden="true">
+            <div class="auth-orb orb-a"></div>
+            <div class="auth-orb orb-b"></div>
+            <div class="auth-showcase-inner">
+                <h2>Лучшие смартфоны — <em>в одном месте</em></h2>
+                <p>Сравнивайте характеристики, следите за заказами и покупайте с гарантией.</p>
+                <ul class="auth-perks">
+                    <li><span class="perk-ico" data-icon="shield-check"></span>Гарантия 1 год на всю технику</li>
+                    <li><span class="perk-ico" data-icon="truck"></span>Быстрая доставка по Кыргызстану</li>
+                    <li><span class="perk-ico" data-icon="refresh"></span>14 дней на обмен и возврат</li>
+                </ul>
             </div>
-            <button type="submit" class="auth-btn">Войти</button>
-        </form>
-
-        <!-- Register Form -->
-        <form id="registerForm" class="auth-form" onsubmit="handleRegister(event)">
-            <input type="text" id="regName" class="auth-input" placeholder="Логин" required>
-            <input type="email" id="regEmail" class="auth-input" placeholder="Email" required>
-            <div class="password-wrapper">
-                <input type="password" id="regPass" class="auth-input" placeholder="Пароль" required>
-                <button type="button" class="toggle-password" onclick="togglePassword('regPass')">👁️</button>
+            <div class="auth-phones">
+                <div class="auth-phone"><img src="img/iPhone 15 pro max.jpg" alt=""></div>
+                <div class="auth-phone"><img src="img/samsung galaxy s24 ultra.jpg" alt=""></div>
+                <div class="auth-phone"><img src="img/xiaomi 14 ultra.jpg" alt=""></div>
             </div>
-            <button type="submit" class="auth-btn">Зарегистрироваться</button>
-        </form>
-    </div>
+        </section>
 
-    <div class="toast-container" id="toastContainer"></div>
+        <!-- Форма -->
+        <section class="auth-panel">
+            <div class="auth-container">
+                <div class="auth-brand">
+                    <img src="img/logo.png" alt="EzShop" class="auth-logo">
+                </div>
+                <h1 class="auth-title" id="authTitle">С возвращением</h1>
+                <p class="auth-sub" id="authSub">Войдите, чтобы продолжить покупки</p>
+
+                <div class="auth-tabs" role="tablist" data-active="login">
+                    <button type="button" class="auth-tab active" role="tab" aria-selected="true" onclick="switchTab('login')">Вход</button>
+                    <button type="button" class="auth-tab" role="tab" aria-selected="false" onclick="switchTab('register')">Регистрация</button>
+                    <span class="auth-tab-indicator" aria-hidden="true"></span>
+                </div>
+
+                <!-- Login Form -->
+                <form id="loginForm" class="auth-form active" onsubmit="handleLogin(event)">
+                    <div class="field">
+                        <input type="email" id="loginInput" class="auth-input" placeholder=" " autocomplete="email" required>
+                        <label for="loginInput">Email</label>
+                    </div>
+                    <div class="field password-wrapper">
+                        <input type="password" id="loginPass" class="auth-input" placeholder=" " autocomplete="current-password" required>
+                        <label for="loginPass">Пароль</label>
+                        <button type="button" class="toggle-password" onclick="togglePassword('loginPass')" aria-label="Показать пароль"></button>
+                    </div>
+                    <button type="submit" class="auth-btn auth-submit"><span class="btn-label">Войти</span><span class="btn-spinner" aria-hidden="true"></span></button>
+                    <p class="auth-switch">Нет аккаунта? <button type="button" onclick="switchTab('register')">Создать</button></p>
+                </form>
+
+                <!-- Register Form -->
+                <form id="registerForm" class="auth-form" onsubmit="handleRegister(event)">
+                    <div class="field">
+                        <input type="text" id="regName" class="auth-input" placeholder=" " autocomplete="username" required minlength="2">
+                        <label for="regName">Логин</label>
+                    </div>
+                    <div class="field">
+                        <input type="email" id="regEmail" class="auth-input" placeholder=" " autocomplete="email" required>
+                        <label for="regEmail">Email</label>
+                    </div>
+                    <div class="field password-wrapper">
+                        <input type="password" id="regPass" class="auth-input" placeholder=" " autocomplete="new-password" required minlength="6" oninput="updateStrength(this.value)">
+                        <label for="regPass">Пароль (от 6 символов)</label>
+                        <button type="button" class="toggle-password" onclick="togglePassword('regPass')" aria-label="Показать пароль"></button>
+                    </div>
+                    <div class="strength" id="strength" aria-live="polite">
+                        <div class="strength-bars"><i></i><i></i><i></i><i></i></div>
+                        <span class="strength-text" id="strengthText">Введите пароль</span>
+                    </div>
+                    <button type="submit" class="auth-btn auth-submit"><span class="btn-label">Зарегистрироваться</span><span class="btn-spinner" aria-hidden="true"></span></button>
+                    <p class="auth-switch">Уже есть аккаунт? <button type="button" onclick="switchTab('login')">Войти</button></p>
+                </form>
+            </div>
+        </section>
+    </main>
+
+    <div class="toast-container" id="toastContainer" aria-live="polite"></div>
 
     <!-- Модульные скрипты -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/config.js"></script>
+    <script src="js/icons.js"></script>
     <script src="js/products-data.js"></script>
     <script src="js/auth.js"></script>
+    <script src="js/ui.js"></script>
     <script src="js/main.js"></script>
     <script>
-        function switchTab(tab) {
-            document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
+        // Иконки внутри страницы входа
+        document.querySelectorAll('[data-icon]').forEach(el => { el.innerHTML = EZ_ICON(el.dataset.icon); });
+        document.querySelectorAll('.toggle-password').forEach(b => { b.innerHTML = EZ_ICON('eye'); });
 
-            if (tab === 'login') {
-                document.querySelectorAll('.auth-tab')[0].classList.add('active');
-                document.getElementById('loginForm').classList.add('active');
-            } else {
-                document.querySelectorAll('.auth-tab')[1].classList.add('active');
-                document.getElementById('registerForm').classList.add('active');
-            }
+        function switchTab(tab) {
+            const isLogin = tab === 'login';
+            const tabs = document.querySelectorAll('.auth-tab');
+            tabs.forEach((t, i) => {
+                const on = (i === 0) === isLogin;
+                t.classList.toggle('active', on);
+                t.setAttribute('aria-selected', String(on));
+            });
+            document.querySelector('.auth-tabs').dataset.active = tab;
+            document.getElementById('loginForm').classList.toggle('active', isLogin);
+            document.getElementById('registerForm').classList.toggle('active', !isLogin);
+            document.getElementById('authTitle').textContent = isLogin ? 'С возвращением' : 'Создайте аккаунт';
+            document.getElementById('authSub').textContent = isLogin
+                ? 'Войдите, чтобы продолжить покупки'
+                : 'Это займёт меньше минуты';
+            const first = document.querySelector('.auth-form.active .auth-input');
+            if (first && window.matchMedia('(hover: hover)').matches) first.focus({ preventScroll: true });
         }
 
         function togglePassword(inputId) {
             const input = document.getElementById(inputId);
-            const btn = input.nextElementSibling;
-
-            if (input.type === 'password') {
-                input.type = 'text';
-                btn.textContent = '🙈';
-            } else {
-                input.type = 'password';
-                btn.textContent = '👁️';
-            }
+            const btn = input.parentElement.querySelector('.toggle-password');
+            const show = input.type === 'password';
+            input.type = show ? 'text' : 'password';
+            btn.innerHTML = EZ_ICON(show ? 'eye-off' : 'eye');
+            btn.setAttribute('aria-label', show ? 'Скрыть пароль' : 'Показать пароль');
         }
+
+        // Индикатор надёжности пароля (только подсказка, проверку выполняет Supabase)
+        function updateStrength(v) {
+            let score = 0;
+            if (v.length >= 6) score++;
+            if (v.length >= 10) score++;
+            if (/[A-ZА-Я]/.test(v) && /[a-zа-я]/.test(v)) score++;
+            if (/\d/.test(v) && /[^A-Za-zА-Яа-я0-9]/.test(v)) score++;
+            if (!v) score = 0;
+            const box = document.getElementById('strength');
+            box.dataset.level = String(score);
+            const labels = ['Введите пароль', 'Слабый', 'Средний', 'Хороший', 'Надёжный'];
+            document.getElementById('strengthText').textContent = labels[score];
+        }
+
+        // Состояние загрузки на кнопках отправки (логика входа остаётся в auth.js)
+        function withLoading(fnName, formId) {
+            const original = window[fnName];
+            window[fnName] = async function (e) {
+                const btn = document.querySelector('#' + formId + ' .auth-submit');
+                btn.classList.add('is-loading');
+                btn.disabled = true;
+                try { return await original(e); }
+                finally { btn.classList.remove('is-loading'); btn.disabled = false; }
+            };
+        }
+        withLoading('handleLogin', 'loginForm');
+        withLoading('handleRegister', 'registerForm');
     </script>
 </body>
 
