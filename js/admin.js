@@ -110,9 +110,13 @@ function toggleProductStock(id) {
     const idx = productsData.findIndex(p => p.id === id);
     if (idx > -1) {
         const currentStock = productsData[idx].inStock !== false;
-        productsData[idx].inStock = !currentStock;
+        const newStock = !currentStock;
+        productsData[idx].inStock = newStock;
+        if (typeof saveStockOverride === 'function') {
+            saveStockOverride(id, newStock);
+        }
         saveProductsData(productsData);
-        const statusLabel = productsData[idx].inStock ? 'В наличии' : 'Нет в наличии';
+        const statusLabel = newStock ? 'В наличии' : 'Нет в наличии';
         showToast(`${productsData[idx].name}: статус изменен на "${statusLabel}"`, 'info');
         filterAdminProducts();
     }
@@ -193,6 +197,9 @@ function handleProductFormSubmit(e) {
                 ...productsData[idx],
                 name, brand, price, color, inStock, ram, storage, display, battery, img, description
             };
+            if (typeof saveStockOverride === 'function') {
+                saveStockOverride(targetId, inStock);
+            }
             saveProductsData(productsData);
             showToast(`Телефон "${name}" успешно обновлен!`, 'success');
         }
@@ -204,6 +211,9 @@ function handleProductFormSubmit(e) {
             name, brand, price, color, inStock, ram, storage, display, battery, img, description
         };
         productsData.unshift(newProduct);
+        if (typeof saveStockOverride === 'function') {
+            saveStockOverride(newId, inStock);
+        }
         saveProductsData(productsData);
         showToast(`Смартфон "${name}" успешно добавлен в каталог!`, 'success');
     }

@@ -200,11 +200,13 @@ nav a:hover {
 /* Toast Notifications */
 .toast-container {
     position: fixed;
-    top: 90px;
-    left: 0;
-    right: 0;
-    width: 100%;
-    padding: 0 16px;
+    top: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: calc(100% - 32px);
+    max-width: 420px;
+    padding: 0;
+    box-sizing: border-box;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -226,12 +228,12 @@ nav a:hover {
     font-size: 14px;
     display: flex;
     align-items: center;
-    gap: 10px;
-    animation: slideUp 0.25s ease-out forwards;
-    width: auto;
-    max-width: min(420px, calc(100vw - 32px));
     justify-content: center;
     text-align: center;
+    gap: 10px;
+    animation: slideUp 0.25s ease-out forwards;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .toast.success { border-color: var(--accent); }
@@ -386,7 +388,18 @@ footer {
         z-index: 300;
         position: relative;
     }
+    .orders-btn {
+        display: none !important;
+    }
+    .cart-btn {
+        right: 14px;
+        bottom: 16px;
+        padding: 10px 16px;
+        font-size: 13px;
+        box-shadow: 0 4px 18px rgba(0, 0, 0, 0.5);
+    }
     .toast-container {
-        top: 76px;
+        top: 68px;
+        width: calc(100% - 24px);
     }
 }

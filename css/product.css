@@ -558,3 +558,27 @@
         padding: 24px;
     }
 }
+
+@media(max-width: 600px) {
+    .product-page-container {
+        padding: 16px 12px;
+    }
+    .product-detail-layout {
+        padding: 16px 14px;
+        border-radius: 16px;
+    }
+    .product-main-img-box {
+        min-height: 280px;
+    }
+    .purchase-controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .purchase-controls .btn-add-cart-large,
+    .purchase-controls .btn-buy-one-click {
+        width: 100%;
+    }
+    .qty-selector {
+        justify-content: center;
+    }
+}

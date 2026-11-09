@@ -4,7 +4,7 @@
 
 const initialProductsData = [
     // Apple (5)
-    { id: 1, name: 'iPhone 13', price: 67500, img: 'img/iphone 13.jpg', brand: 'Apple', ram: 4, storage: 128, color: 'Midnight', display: '6.1"', battery: 3240, description: 'Надежный смартфон с мощным процессором A15 Bionic, отличной двойной камерой и длительным временем работы.' },
+    { id: 1, name: 'iPhone 13', price: 67500, img: 'img/iphone 13.jpg', brand: 'Apple', ram: 4, storage: 128, color: 'Midnight', display: '6.1"', battery: 3240, inStock: false, description: 'Надежный смартфон с мощным процессором A15 Bionic, отличной двойной камерой и длительным временем работы.' },
     { id: 6, name: 'iPhone 15 Pro Max', price: 107910, img: 'img/iPhone 15 pro max.jpg', brand: 'Apple', ram: 8, storage: 256, color: 'Natural Titanium', display: '6.7"', battery: 4441, description: 'Флагман в титановом корпусе с кнопкой Action Button, инновационным чипом A17 Pro и 5x оптическим зумом.' },
     { id: 10, name: 'iPhone 14 Pro', price: 89910, img: 'img/iPhone 14 Pro.jpg', brand: 'Apple', ram: 6, storage: 256, color: 'Space Black', display: '6.1"', battery: 3200, description: 'Модель с интерактивным Dynamic Island, Always-On дисплеем и камерой 48 Мп для потрясающих снимков.' },
     { id: 15, name: 'iPhone 12 Mini', price: 45000, img: 'img/iphone 12 mini.jpg', brand: 'Apple', ram: 4, storage: 64, color: 'Blue', display: '5.4"', battery: 2227, description: 'Компактный и легкий флагман с поддержкой 5G, экраном Super Retina XDR и защитой Ceramic Shield.' },
@@ -74,12 +74,59 @@ const initialBrandsData = [
 
 const PRODUCTS_STORAGE_KEY = 'ez_custom_products';
 const BRANDS_STORAGE_KEY = 'ez_custom_brands';
+const STOCK_STORAGE_KEY = 'ez_stock_overrides';
+
+// Stock Overrides Manager (syncs stock status across devices)
+function getStockOverrides() {
+    try {
+        const stored = localStorage.getItem(STOCK_STORAGE_KEY);
+        if (stored) return JSON.parse(stored);
+    } catch (e) {}
+    return { 1: false }; // iPhone 13 defaults to out of stock as set by user
+}
+
+function saveStockOverride(productId, inStock) {
+    const overrides = getStockOverrides();
+    overrides[productId] = inStock === false || inStock === 'false' ? false : true;
+    localStorage.setItem(STOCK_STORAGE_KEY, JSON.stringify(overrides));
+    saveStockToSupabase(overrides);
+}
+
+function applyStockOverrides(list) {
+    if (!Array.isArray(list)) return [];
+    const overrides = getStockOverrides();
+    return list.map(p => ({
+        ...p,
+        inStock: overrides[p.id] !== undefined ? overrides[p.id] : (p.inStock === false || p.inStock === 'false' ? false : true)
+    }));
+}
+
+async function saveStockToSupabase(overrides) {
+    if (!supabaseClient || !currentUser) return;
+    try {
+        await supabaseClient
+            .from('orders')
+            .insert({
+                user_id: currentUser.id,
+                user_order_id: 0,
+                date: new Date().toLocaleString('ru-RU'),
+                total: 0,
+                items: [{ type: 'stock_overrides', overrides, updatedAt: Date.now() }],
+                status: '__STOCK_SYNC__',
+                customer_name: 'SystemStockSync',
+                customer_phone: '0',
+                customer_address: 'system'
+            });
+    } catch (err) {
+        console.warn('Error saving stock status to Supabase:', err);
+    }
+}
 
 // Products Storage
 function normalizeProducts(list) {
     return list.map(p => ({
         ...p,
-        inStock: p.inStock !== false
+        inStock: p.inStock === false || p.inStock === 'false' ? false : true
     }));
 }
 
@@ -89,18 +136,18 @@ function getProductsData() {
         if (stored) {
             const parsed = JSON.parse(stored);
             if (Array.isArray(parsed) && parsed.length > 0) {
-                return normalizeProducts(parsed);
+                return applyStockOverrides(normalizeProducts(parsed));
             }
         }
     } catch (e) {
         console.warn('Error reading products from storage:', e);
     }
-    return normalizeProducts([...initialProductsData]);
+    return applyStockOverrides(normalizeProducts([...initialProductsData]));
 }
 
 function saveProductsData(products, syncCloud = true) {
     try {
-        const normalized = normalizeProducts(products);
+        const normalized = applyStockOverrides(normalizeProducts(products));
         localStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify(normalized));
         productsData = normalized;
         if (syncCloud) {
@@ -150,36 +197,19 @@ async function saveCatalogToSupabase() {
             updatedAt: Date.now()
         }];
 
-        const { data: existing } = await supabaseClient
+        await supabaseClient
             .from('orders')
-            .select('id')
-            .eq('status', '__CATALOG_SYNC__')
-            .order('id', { ascending: false })
-            .limit(1);
-
-        if (existing && existing.length > 0) {
-            await supabaseClient
-                .from('orders')
-                .update({
-                    items: payload,
-                    date: new Date().toLocaleString('ru-RU')
-                })
-                .eq('id', existing[0].id);
-        } else {
-            await supabaseClient
-                .from('orders')
-                .insert({
-                    user_id: currentUser.id,
-                    user_order_id: 0,
-                    date: new Date().toLocaleString('ru-RU'),
-                    total: 0,
-                    items: payload,
-                    status: '__CATALOG_SYNC__',
-                    customer_name: 'SystemCatalogSync',
-                    customer_phone: '0',
-                    customer_address: 'system'
-                });
-        }
+            .insert({
+                user_id: currentUser.id,
+                user_order_id: 0,
+                date: new Date().toLocaleString('ru-RU'),
+                total: 0,
+                items: payload,
+                status: '__CATALOG_SYNC__',
+                customer_name: 'SystemCatalogSync',
+                customer_phone: '0',
+                customer_address: 'system'
+            });
     } catch (err) {
         console.warn('Cloud catalog sync error:', err);
     }
@@ -188,6 +218,23 @@ async function saveCatalogToSupabase() {
 async function syncCatalogWithSupabase() {
     if (!supabaseClient) return;
     try {
+        // 1. Sync real-time Stock Overrides from Supabase across all devices
+        const { data: stockData } = await supabaseClient
+            .from('orders')
+            .select('items')
+            .eq('status', '__STOCK_SYNC__')
+            .order('id', { ascending: false })
+            .limit(1);
+
+        if (stockData && stockData.length > 0) {
+            const item = Array.isArray(stockData[0].items) ? stockData[0].items[0] : stockData[0].items;
+            if (item && item.overrides) {
+                const mergedOverrides = { ...getStockOverrides(), ...item.overrides };
+                localStorage.setItem(STOCK_STORAGE_KEY, JSON.stringify(mergedOverrides));
+            }
+        }
+
+        // 2. Sync Full Catalog
         const { data, error } = await supabaseClient
             .from('orders')
             .select('items')
@@ -195,15 +242,18 @@ async function syncCatalogWithSupabase() {
             .order('id', { ascending: false })
             .limit(1);
 
-        if (error || !data || data.length === 0) return;
+        if (!error && data && data.length > 0) {
+            const syncItem = Array.isArray(data[0].items) ? data[0].items[0] : data[0].items;
+            if (syncItem && Array.isArray(syncItem.products) && syncItem.products.length > 0) {
+                saveProductsData(syncItem.products, false);
+            }
+            if (syncItem && Array.isArray(syncItem.brands) && syncItem.brands.length > 0) {
+                saveBrandsData(syncItem.brands, false);
+            }
+        }
 
-        const syncItem = Array.isArray(data[0].items) ? data[0].items[0] : data[0].items;
-        if (syncItem && Array.isArray(syncItem.products) && syncItem.products.length > 0) {
-            saveProductsData(syncItem.products, false);
-        }
-        if (syncItem && Array.isArray(syncItem.brands) && syncItem.brands.length > 0) {
-            saveBrandsData(syncItem.brands, false);
-        }
+        // Re-apply stock overrides so in-memory productsData is 100% up-to-date
+        productsData = applyStockOverrides(productsData);
     } catch (err) {
         console.warn('Could not load catalog from Supabase:', err);
     }

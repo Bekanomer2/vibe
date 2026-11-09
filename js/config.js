@@ -18,8 +18,13 @@ const TG_CHAT_ID = '-5049916055';
 // Global Toast Notifications
 let activeToastTimer = null;
 function showToast(msg, type = 'success') {
-    const container = document.getElementById('toastContainer');
-    if (!container) return;
+    let container = document.getElementById('toastContainer');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'toastContainer';
+        container.className = 'toast-container';
+        document.body.appendChild(container);
+    }
 
     // Clear previous toast to prevent jumping/stacking shift
     if (activeToastTimer) {
