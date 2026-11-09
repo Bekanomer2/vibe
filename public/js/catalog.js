@@ -9,12 +9,15 @@ function renderProducts(list) {
 
     const countEl = document.getElementById('productsCount');
     if (countEl) countEl.textContent = list.length;
+    const applyCount = document.getElementById('filtersApplyCount');
+    if (applyCount) applyCount.textContent = list.length;
 
     if (list.length === 0) {
         productsEl.innerHTML = `
-            <div style="grid-column: 1 / -1; text-align: center; padding: 60px 20px; color: var(--muted);">
-                <h3>Ничего не найдено 🔍</h3>
-                <p style="margin-top: 8px;">Попробуйте изменить параметры фильтрации или поисковый запрос</p>
+            <div class="empty-state">
+                <h3>Ничего не найдено</h3>
+                <p>Попробуйте изменить параметры фильтрации или поисковый запрос</p>
+                <button type="button" class="btn btn-primary" style="margin-top: 18px;" onclick="resetAllFilters()">Сбросить фильтры</button>
             </div>
         `;
         return;
@@ -22,41 +25,7 @@ function renderProducts(list) {
 
     const fragment = document.createDocumentFragment();
 
-    list.forEach(p => {
-        const inStock = p.inStock !== false;
-        const c = document.createElement('div');
-        c.className = 'card';
-        c.innerHTML = `
-            <div class="card-badges">
-                <button class="btn-compare" data-id="${p.id}" onclick="toggleCompare(${p.id}, event)" title="Добавить к сравнению">⚖️</button>
-                <button class="btn-fav" data-id="${p.id}" onclick="toggleFavorite(${p.id}, event)" title="В избранное">🤍</button>
-            </div>
-            <a href="product.html?id=${p.id}" class="card-img-link">
-                <img src="${p.img}" alt="${p.name}" loading="lazy" ${!inStock ? 'style="opacity: 0.65;"' : ''}>
-            </a>
-            <div style="display: flex; justify-content: space-between; align-items: center; gap: 6px;">
-                <a href="product.html?id=${p.id}" class="card-title-link">
-                    <h3>${p.name}</h3>
-                </a>
-            </div>
-            <div class="card-stock ${inStock ? 'in-stock' : 'out-of-stock'}">
-                ${inStock ? '● В наличии' : '● Нет в наличии'}
-            </div>
-            <div class="specs">
-                ${p.display} • ${p.ram}/${p.storage} ГБ<br>
-                ${p.battery} мАч • ${p.color}
-            </div>
-            <div class="price">${p.price.toLocaleString()} сом</div>
-            <div class="card-actions">
-                ${inStock
-                    ? `<button class="btn-add-cart" onclick="addToCart(productsData.find(x => x.id === ${p.id}))">В корзину</button>`
-                    : `<button class="btn-add-cart" disabled>Нет в наличии</button>`
-                }
-                <a href="product.html?id=${p.id}" class="btn-details" title="Подробнее">Инфо</a>
-            </div>
-        `;
-        fragment.appendChild(c);
-    });
+    list.forEach((p, idx) => fragment.appendChild(buildProductCard(p, idx)));
 
     productsEl.replaceChildren(fragment);
 
@@ -83,29 +52,102 @@ function renderFilters() {
     const ramContainer = document.getElementById('ramFilters');
     const storageContainer = document.getElementById('storageFilters');
 
+    const countBy = (key, value) => productsData.filter(p => p[key] === value).length;
+
     if (brandContainer) {
         brandContainer.innerHTML = allBrandNames.map(b => `
-            <label class="checkbox-label">
-                <input type="checkbox" value="${b}" ${prevBrands.includes(b) ? 'checked' : ''} onchange="applyFilters(true)"> ${b}
+            <label class="chip">
+                <input type="checkbox" value="${esc(b)}" ${prevBrands.includes(b) ? 'checked' : ''} onchange="applyFilters(true)">
+                ${esc(b)} <span class="chip-count">${productsData.filter(p => p.brand === b).length}</span>
             </label>
         `).join('');
     }
 
     if (ramContainer) {
         ramContainer.innerHTML = rams.map(r => `
-            <label class="checkbox-label">
-                <input type="checkbox" value="${r}" ${prevRam.includes(String(r)) ? 'checked' : ''} onchange="applyFilters(true)"> ${r} ГБ
+            <label class="chip">
+                <input type="checkbox" value="${r}" ${prevRam.includes(String(r)) ? 'checked' : ''} onchange="applyFilters(true)">
+                ${r} ГБ <span class="chip-count">${countBy('ram', r)}</span>
             </label>
         `).join('');
     }
 
     if (storageContainer) {
         storageContainer.innerHTML = storages.map(s => `
-            <label class="checkbox-label">
-                <input type="checkbox" value="${s}" ${prevStorage.includes(String(s)) ? 'checked' : ''} onchange="applyFilters(true)"> ${s} ГБ
+            <label class="chip">
+                <input type="checkbox" value="${s}" ${prevStorage.includes(String(s)) ? 'checked' : ''} onchange="applyFilters(true)">
+                ${s} ГБ <span class="chip-count">${countBy('storage', s)}</span>
             </label>
         `).join('');
     }
+
+    updateHeroStats();
+}
+
+function updateHeroStats() {
+    const models = document.getElementById('heroModels');
+    const brands = document.getElementById('heroBrands');
+    if (models) models.textContent = productsData.length;
+    if (brands) brands.textContent = new Set(productsData.map(p => p.brand)).size;
+}
+
+// Быстрые диапазоны цены
+function setPricePreset(btn) {
+    const minPrice = document.getElementById('minPrice');
+    const maxPrice = document.getElementById('maxPrice');
+    if (!minPrice || !maxPrice) return;
+    const same = minPrice.value === btn.dataset.min && maxPrice.value === btn.dataset.max;
+    minPrice.value = same ? '' : btn.dataset.min;
+    maxPrice.value = same ? '' : btn.dataset.max;
+    applyFilters(true);
+}
+
+// Количество активных фильтров + «чипы» применённых условий над сеткой
+function renderActiveFilters() {
+    const box = document.getElementById('activeFilters');
+    const minPrice = document.getElementById('minPrice');
+    const maxPrice = document.getElementById('maxPrice');
+    const chips = [];
+
+    if (minPrice && minPrice.value) chips.push({ label: `от ${Number(minPrice.value).toLocaleString()} сом`, clear: () => { minPrice.value = ''; } });
+    if (maxPrice && maxPrice.value) chips.push({ label: `до ${Number(maxPrice.value).toLocaleString()} сом`, clear: () => { maxPrice.value = ''; } });
+
+    document.querySelectorAll('#brandFilters input:checked').forEach(cb => chips.push({ label: cb.value, clear: () => { cb.checked = false; } }));
+    document.querySelectorAll('#ramFilters input:checked').forEach(cb => chips.push({ label: `ОЗУ ${cb.value} ГБ`, clear: () => { cb.checked = false; } }));
+    document.querySelectorAll('#storageFilters input:checked').forEach(cb => chips.push({ label: `Память ${cb.value} ГБ`, clear: () => { cb.checked = false; } }));
+
+    const stock = document.getElementById('onlyInStockCheck');
+    if (stock && stock.checked) chips.push({ label: 'В наличии', clear: () => { stock.checked = false; } });
+    const fav = document.getElementById('onlyFavoritesCheck');
+    if (fav && fav.checked) chips.push({ label: 'Избранные', clear: () => { fav.checked = false; } });
+
+    window.__activeFilterClears = chips.map(c => c.clear);
+
+    if (box) {
+        box.innerHTML = chips.map((c, i) => `
+            <span class="active-chip">${esc(c.label)}<button type="button" aria-label="Убрать фильтр" onclick="removeActiveFilter(${i})">&times;</button></span>
+        `).join('');
+    }
+
+    ['filterCount', 'filterCountBtn'].forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.textContent = chips.length;
+        el.classList.toggle('show', chips.length > 0);
+    });
+
+    // подсветка активных пресетов цены
+    document.querySelectorAll('.price-presets .chip').forEach(b => {
+        b.classList.toggle('is-on',
+            !!minPrice && !!maxPrice && minPrice.value === b.dataset.min && maxPrice.value === b.dataset.max
+            && (b.dataset.min !== '' || b.dataset.max !== ''));
+    });
+}
+
+function removeActiveFilter(i) {
+    const fn = (window.__activeFilterClears || [])[i];
+    if (fn) fn();
+    applyFilters(false);
 }
 
 function applyFilters(shouldScroll = true) {
@@ -156,10 +198,13 @@ function applyFilters(shouldScroll = true) {
     list = list.filter(p => p.price >= min && p.price <= max && (p.name.toLowerCase().includes(q) || p.brand.toLowerCase().includes(q)));
 
     // Prevent browser clamping scroll to the bottom footer when filtered list shrinks
-    if (shouldScroll && window.innerWidth > 768 && window.scrollY > 160) {
-        window.scrollTo({ top: 0, behavior: 'instant' });
+    if (shouldScroll && window.innerWidth > 900 && window.scrollY > 160) {
+        const top = document.getElementById('catalog');
+        const y = top ? Math.max(0, top.getBoundingClientRect().top + window.scrollY - 90) : 0;
+        if (window.scrollY > y) window.scrollTo({ top: y, behavior: 'instant' });
     }
 
+    renderActiveFilters();
     renderProducts(list);
 }
 
@@ -178,6 +223,28 @@ function resetAllFilters() {
     applyFilters(true);
     showToast('Фильтры сброшены', 'info');
 }
+
+// Мобильная шторка фильтров
+function openFilters() {
+    const panel = document.getElementById('filtersPanel');
+    const back = document.getElementById('filtersBackdrop');
+    if (!panel) return;
+    panel.classList.add('open');
+    if (back) back.classList.add('show');
+    document.body.classList.add('sheet-open');
+}
+
+function closeFilters() {
+    const panel = document.getElementById('filtersPanel');
+    const back = document.getElementById('filtersBackdrop');
+    if (panel) panel.classList.remove('open');
+    if (back) back.classList.remove('show');
+    document.body.classList.remove('sheet-open');
+}
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeFilters();
+});
 
 document.addEventListener('DOMContentLoaded', () => {
     if (productsEl) {

@@ -4,33 +4,49 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#070b1a">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Manrope:wght@500;600;700;800&display=swap">
+    <script src="js/theme.js"></script>
+    <!-- Three.js подгружается только на этой странице и только когда нужен 3D-разбор -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
     <title>Детали товара — EzShop</title>
     <link rel="stylesheet" href="style.css">
 </head>
 
 <body class="auth-loading">
     <div class="loader-overlay" id="pageLoader">
-        <img src="img/logo.png" alt="Loading..." class="loader-logo">
+        <img src="img/logo.png" alt="Загрузка" class="loader-logo">
     </div>
 
-    <header>
-        <a href="index.html" class="logo">
-            <img src="img/logo.png" alt="EzShop Logo">
-        </a>
-        <nav id="nav">
-            <a href="index.html">Каталог</a>
-            <a href="javascript:void(0)" onclick="openFavoritesModal()">❤️ Избранное (<span class="nav-fav-count">0</span>)</a>
-            <a href="javascript:void(0)" onclick="openCompareModal()">⚖️ Сравнение (<span id="navCompareCount">0</span>)</a>
-            <a href="orders.html">📦 Заказы</a>
-            <a href="admin.html" class="admin-only-nav">⚙️ Админка</a>
-            <a href="index.html#footer-about">О нас</a>
-            <a href="index.html#footer-contacts">Контакты</a>
-            <div class="user-panel">
-                <span id="usernameDisplay"></span>
-                <button onclick="logout()">Выйти</button>
-            </div>
-        </nav>
-        <div class="burger" id="burger"><span></span><span></span><span></span></div>
+    <header class="site-header">
+        <div class="header-inner">
+            <a href="index.html" class="logo" aria-label="EzShop — на главную">
+                <img src="img/logo.png" alt="EzShop">
+            </a>
+            <nav id="nav" class="main-nav" aria-label="Главное меню">
+                <a href="index.html" data-icon="grid">Каталог</a>
+                <a href="javascript:void(0)" onclick="openFavoritesModal()" data-icon="heart">Избранное <span class="nav-count nav-fav-count">0</span></a>
+                <a href="javascript:void(0)" onclick="openCompareModal()" data-icon="scale">Сравнение <span class="nav-count" id="navCompareCount">0</span></a>
+                <a href="orders.html" class="nav-orders-link" data-icon="package">Заказы</a>
+                <a href="admin.html" class="admin-only-nav" data-icon="shield">Админка</a>
+                <a href="index.html#footer-about" data-icon="info">О нас</a>
+                <a href="index.html#footer-contacts" data-icon="phone">Контакты</a>
+                <div class="user-panel">
+                    <span id="usernameDisplay"></span>
+                    <button type="button" onclick="logout()">Выйти</button>
+                </div>
+            </nav>
+            <div class="burger" id="burger"><span></span><span></span><span></span></div>
+        </div>
     </header>
 
     <div class="product-page-container">
@@ -42,10 +58,16 @@
         </div>
 
         <div class="product-detail-layout" id="productDetailContainer">
-            <div style="text-align: center; padding: 60px; color: var(--muted);">
-                Загрузка информации о товаре...
+            <div style="grid-column: 1 / -1;">
+                <div class="skeleton" style="height: 420px; border-radius: 28px;"></div>
             </div>
         </div>
+
+        <!-- 3D-разбор смартфона при прокрутке (строится из JS) -->
+        <section class="phone-story" id="phoneStory" aria-label="Разбор смартфона по частям" hidden></section>
+
+        <!-- Цены в магазинах -->
+        <section class="price-section" id="priceSection" aria-label="Цены в магазинах"></section>
 
         <!-- Секция отзывов покупателей -->
         <section class="reviews-section" id="reviewsSection">
@@ -59,11 +81,14 @@
         </section>
     </div>
 
-    <a href="orders.html" class="orders-btn" id="ordersBtn">📦 <span class="btn-text">Заказы</span></a>
-    <a href="cart.html" class="cart-btn" id="cartBtn">🛒 <span class="btn-text">Корзина</span> <span id="cartCount">0</span></a>
-    <div class="toast-container" id="toastContainer"></div>
+    <a href="orders.html" class="orders-btn" id="ordersBtn">Заказы</a>
+    <a href="cart.html" class="cart-btn" id="cartBtn" aria-label="Корзина">
+        <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
+        <span class="btn-text">Корзина</span> <span id="cartCount">0</span>
+    </a>
+    <div class="toast-container" id="toastContainer" aria-live="polite"></div>
 
-    <!-- Модалка сравнения -->
+    <!-- Панель и модалка сравнения -->
     <div class="compare-bar" id="compareBar" style="display: none;">
         <div class="compare-bar-content">
             <span id="compareBarText">Выбрано 0 товаров для сравнения</span>
@@ -74,11 +99,11 @@
         </div>
     </div>
 
-    <div class="modal-overlay" id="compareModal" style="display: none;">
+    <div class="modal-overlay" id="compareModal" style="display: none;" role="dialog" aria-modal="true" aria-label="Сравнение смартфонов">
         <div class="modal-content compare-modal-content">
             <div class="modal-header">
-                <h3>⚖️ Сравнение смартфонов</h3>
-                <button class="modal-close" onclick="closeCompareModal()">&times;</button>
+                <h3>Сравнение смартфонов</h3>
+                <button class="modal-close" onclick="closeCompareModal()" aria-label="Закрыть">&times;</button>
             </div>
             <div class="compare-table-wrapper" id="compareTableContainer"></div>
         </div>
@@ -92,9 +117,9 @@
             </div>
             <div class="footer-section">
                 <h3>Контакты</h3>
-                <p>📍 г. Бишкек, ул. Киевская 10</p>
-                <p>📞 +996 (777) 12-34-56</p>
-                <p>✉️ support@ezshop.kg</p>
+                <p>г. Бишкек, ул. Киевская 10</p>
+                <p>+996 (777) 12-34-56</p>
+                <p>support@ezshop.kg</p>
             </div>
         </div>
         <div class="footer-bottom">
@@ -105,12 +130,16 @@
     <!-- Модульные скрипты -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/config.js"></script>
+    <script src="js/icons.js"></script>
     <script src="js/products-data.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/cart.js"></script>
     <script src="js/favorites.js"></script>
     <script src="js/compare.js"></script>
+    <script src="js/product-card.js"></script>
+    <script src="js/price-chart.js"></script>
     <script src="js/product-detail.js"></script>
+    <script src="js/ui.js"></script>
     <script src="js/main.js"></script>
 </body>
 

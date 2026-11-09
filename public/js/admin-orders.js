@@ -165,26 +165,22 @@ function renderAdminOrdersList(orders) {
             <div class="admin-order-details-grid">
                 <!-- Данные клиента -->
                 <div class="admin-order-client-box">
-                    <div style="font-size:11px; text-transform:uppercase; letter-spacing:0.5px; color:var(--accent); font-weight:700; margin-bottom:6px;">Клиент и доставка</div>
-                    <div><b>👤 Получатель:</b> ${o.customer_name || 'Не указано'}</div>
-                    <div style="margin: 4px 0;">
-                        <b>📞 Телефон:</b> 
-                        <a href="tel:${o.customer_phone}" style="color:var(--accent); font-weight:700; text-decoration:underline;">
-                            ${o.customer_phone || 'Не указан'}
-                        </a>
-                    </div>
-                    <div><b>📍 Адрес:</b> ${o.customer_address || 'Самовывоз / Не указан'}</div>
+                    <span class="client-label">Клиент и доставка</span>
+                    <div class="info-line">${ico('user')}<span><b>Получатель:</b> ${esc(o.customer_name || 'Не указано')}</span></div>
+                    <div class="info-line">${ico('phone')}<span><b>Телефон:</b>
+                        <a href="tel:${esc(o.customer_phone)}" style="color:var(--accent); font-weight:700; text-decoration:underline;">${esc(o.customer_phone || 'Не указан')}</a></span></div>
+                    <div class="info-line">${ico('map-pin')}<span><b>Адрес:</b> ${esc(o.customer_address || 'Самовывоз / Не указан')}</span></div>
                 </div>
 
                 <!-- Управление статусом прямо из карточки (Администратор может выставить любой статус) -->
                 <div class="admin-order-status-change-box">
                     <div style="font-size:11px; text-transform:uppercase; letter-spacing:0.5px; color:var(--muted); font-weight:700; margin-bottom:6px;">Сменить статус заказа:</div>
                     <select class="admin-status-select" onchange="changeOrderStatusFromAdmin(${o.id}, this.value)">
-                        <option value="В обработке" ${statusText === 'В обработке' ? 'selected' : ''}>⏳ В обработке</option>
-                        <option value="В работе" ${statusText === 'В работе' ? 'selected' : ''}>🔨 В работе</option>
-                        <option value="Доставлен" ${statusText === 'Доставлен' ? 'selected' : ''}>✅ Доставлен</option>
-                        <option value="Возврат" ${statusText === 'Возврат' ? 'selected' : ''}>🔄 Возврат</option>
-                        <option value="Отменен" ${statusText === 'Отменен' ? 'selected' : ''}>❌ Отменен</option>
+                        <option value="В обработке" ${statusText === 'В обработке' ? 'selected' : ''}>В обработке</option>
+                        <option value="В работе" ${statusText === 'В работе' ? 'selected' : ''}>В работе</option>
+                        <option value="Доставлен" ${statusText === 'Доставлен' ? 'selected' : ''}>Доставлен</option>
+                        <option value="Возврат" ${statusText === 'Возврат' ? 'selected' : ''}>Возврат</option>
+                        <option value="Отменен" ${statusText === 'Отменен' ? 'selected' : ''}>Отменен</option>
                     </select>
                 </div>
             </div>

@@ -4,77 +4,139 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#070b1a">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Manrope:wght@500;600;700;800&display=swap">
+    <script src="js/theme.js"></script>
     <title>EzShop — Магазин смартфонов</title>
     <link rel="stylesheet" href="style.css">
 </head>
 
 <body class="auth-loading">
     <div class="loader-overlay" id="pageLoader">
-        <img src="img/logo.png" alt="Loading..." class="loader-logo">
+        <img src="img/logo.png" alt="Загрузка" class="loader-logo">
     </div>
 
-    <header>
-        <a href="index.html" class="logo">
-            <img src="img/logo.png" alt="EzShop Logo">
-        </a>
-        <nav id="nav">
-            <a href="index.html">Каталог</a>
-            <a href="javascript:void(0)" onclick="openFavoritesModal()">❤️ Избранное (<span class="nav-fav-count">0</span>)</a>
-            <a href="javascript:void(0)" onclick="openCompareModal()">⚖️ Сравнение (<span id="navCompareCount">0</span>)</a>
-            <a href="orders.html" class="nav-orders-link">📦 Заказы</a>
-            <a href="admin.html" class="admin-only-nav">⚙️ Админка</a>
-            <a href="#footer-about">О нас</a>
-            <a href="#footer-contacts">Контакты</a>
-            <div class="user-panel">
-                <span id="usernameDisplay"></span>
-                <button onclick="logout()">Выйти</button>
-            </div>
-        </nav>
-        <div class="burger" id="burger"><span></span><span></span><span></span></div>
+    <header class="site-header">
+        <div class="header-inner">
+            <a href="index.html" class="logo" aria-label="EzShop — на главную">
+                <img src="img/logo.png" alt="EzShop">
+            </a>
+            <nav id="nav" class="main-nav" aria-label="Главное меню">
+                <a href="index.html" data-icon="grid">Каталог</a>
+                <a href="javascript:void(0)" onclick="openFavoritesModal()" data-icon="heart">Избранное <span class="nav-count nav-fav-count">0</span></a>
+                <a href="javascript:void(0)" onclick="openCompareModal()" data-icon="scale">Сравнение <span class="nav-count" id="navCompareCount">0</span></a>
+                <a href="orders.html" class="nav-orders-link" data-icon="package">Заказы</a>
+                <a href="admin.html" class="admin-only-nav" data-icon="shield">Админка</a>
+                <a href="#footer-about" data-icon="info">О нас</a>
+                <a href="#footer-contacts" data-icon="phone">Контакты</a>
+                <div class="user-panel">
+                    <span id="usernameDisplay"></span>
+                    <button type="button" onclick="logout()">Выйти</button>
+                </div>
+            </nav>
+            <div class="burger" id="burger"><span></span><span></span><span></span></div>
+        </div>
     </header>
 
+    <!-- Hero -->
+    <section class="hero" aria-label="Приветствие">
+        <div class="hero-card" data-reveal>
+            <div class="hero-text">
+                <span class="hero-eyebrow"><i></i> Новая коллекция 2026 · в наличии в Бишкеке</span>
+                <h1>Смартфоны, которые хочется <em>держать в руках</em></h1>
+                <p>Флагманы и бестселлеры с гарантией, быстрой доставкой по Кыргызстану и возвратом в течение 14 дней. Сравнивайте модели и выбирайте без переплат.</p>
+                <div class="hero-cta">
+                    <a href="#catalog" class="btn btn-primary">Смотреть каталог</a>
+                    <button type="button" class="btn btn-ghost" onclick="openCompareModal()">Сравнить модели</button>
+                </div>
+                <div class="hero-stats">
+                    <div class="hero-stat"><strong id="heroModels">40+</strong><span>моделей в каталоге</span></div>
+                    <div class="hero-stat"><strong id="heroBrands">8</strong><span>популярных брендов</span></div>
+                    <div class="hero-stat"><strong>1 год</strong><span>гарантии на технику</span></div>
+                </div>
+            </div>
+            <div class="hero-visual" aria-hidden="true">
+                <div class="hero-phone"><img src="img/iPhone 15 pro max.jpg" alt="" loading="eager"></div>
+                <div class="hero-phone"><img src="img/samsung galaxy s24 ultra.jpg" alt="" loading="eager"></div>
+                <div class="hero-phone"><img src="img/pixel 8 pro.jpeg" alt="" loading="eager"></div>
+            </div>
+        </div>
+    </section>
+
     <div class="main-container">
-        <aside class="sidebar">
-            <div class="filter-group">
-                <h3>Цена (сом)</h3>
-                <div class="price-inputs">
-                    <input type="number" id="minPrice" placeholder="От" oninput="applyFilters()">
-                    <input type="number" id="maxPrice" placeholder="До" oninput="applyFilters()">
+        <aside class="sidebar" id="filtersPanel" aria-label="Фильтры каталога">
+            <div class="sidebar-head">
+                <h2>Фильтры <span class="filter-count" id="filterCount">0</span></h2>
+                <div style="display:flex; gap:8px; align-items:center;">
+                    <button type="button" class="btn-reset-filters" onclick="resetAllFilters()">Сбросить</button>
+                    <button type="button" class="sidebar-close" onclick="closeFilters()" aria-label="Закрыть фильтры">&times;</button>
                 </div>
             </div>
 
-            <div class="filter-group">
-                <h3>Бренд</h3>
-                <div id="brandFilters"></div>
-            </div>
+            <details class="filter-group" open>
+                <summary>Цена, сом</summary>
+                <div class="filter-body">
+                    <div class="price-inputs">
+                        <input type="number" id="minPrice" placeholder="От" inputmode="numeric" min="0" aria-label="Цена от" oninput="applyFilters()">
+                        <input type="number" id="maxPrice" placeholder="До" inputmode="numeric" min="0" aria-label="Цена до" oninput="applyFilters()">
+                    </div>
+                    <div class="price-presets">
+                        <button type="button" class="chip" data-min="" data-max="30000" onclick="setPricePreset(this)">до 30 000</button>
+                        <button type="button" class="chip" data-min="30000" data-max="60000" onclick="setPricePreset(this)">30–60 тыс.</button>
+                        <button type="button" class="chip" data-min="60000" data-max="" onclick="setPricePreset(this)">от 60 000</button>
+                    </div>
+                </div>
+            </details>
 
-            <div class="filter-group">
-                <h3>Оперативная память</h3>
-                <div id="ramFilters"></div>
-            </div>
+            <details class="filter-group" open>
+                <summary>Бренд</summary>
+                <div class="filter-body"><div class="chip-list" id="brandFilters"></div></div>
+            </details>
 
-            <div class="filter-group">
-                <h3>Встроенная память</h3>
-                <div id="storageFilters"></div>
-            </div>
+            <details class="filter-group" open>
+                <summary>Оперативная память</summary>
+                <div class="filter-body"><div class="chip-list" id="ramFilters"></div></div>
+            </details>
 
-            <div class="filter-group" style="padding-top: 8px; border-top: 1px dashed var(--border);">
-                <label class="checkbox-label" style="font-weight: 700; color: var(--success);">
-                    <input type="checkbox" id="onlyInStockCheck" onchange="applyFilters()"> ● Только в наличии
+            <details class="filter-group">
+                <summary>Встроенная память</summary>
+                <div class="filter-body"><div class="chip-list" id="storageFilters"></div></div>
+            </details>
+
+            <div class="filter-toggles">
+                <label class="switch-label">
+                    <span>Только в наличии</span>
+                    <input type="checkbox" id="onlyInStockCheck" onchange="applyFilters()">
+                    <span class="switch"></span>
                 </label>
-                <label class="checkbox-label" style="font-weight: 700; color: #f43f5e;">
-                    <input type="checkbox" id="onlyFavoritesCheck" onchange="applyFilters()"> ❤️ Только избранные
+                <label class="switch-label">
+                    <span>Только избранные</span>
+                    <input type="checkbox" id="onlyFavoritesCheck" onchange="applyFilters()">
+                    <span class="switch"></span>
                 </label>
             </div>
 
-            <button class="btn-reset-filters" onclick="resetAllFilters()">Сбросить фильтры</button>
+            <button type="button" class="btn btn-primary filters-apply" onclick="closeFilters()">
+                Показать <span id="filtersApplyCount" style="margin-left:4px;">0</span>&nbsp;моделей
+            </button>
         </aside>
 
-        <main class="content">
+        <div class="filters-backdrop" id="filtersBackdrop" onclick="closeFilters()"></div>
+
+        <main class="content" id="catalog">
             <div class="top-bar">
-                <input type="text" id="search" placeholder="Поиск смартфона по названию..." oninput="applyFilters()">
+                <div class="search-wrap">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+                    <input type="text" id="search" placeholder="Поиск смартфона по названию или бренду" autocomplete="off" aria-label="Поиск" oninput="applyFilters()">
+                </div>
+                <button type="button" class="btn-filters-open" onclick="openFilters()">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg>
+                    Фильтры <span class="filter-count" id="filterCountBtn">0</span>
+                </button>
                 <div class="sort-box">
-                    <select id="sort" onchange="applyFilters()">
+                    <select id="sort" aria-label="Сортировка" onchange="applyFilters()">
                         <option value="default">По умолчанию</option>
                         <option value="price_asc">Сначала дешевле</option>
                         <option value="price_desc">Сначала дороже</option>
@@ -85,14 +147,18 @@
             </div>
             <div class="catalog-summary">
                 <span>Найдено моделей: <strong id="productsCount">0</strong></span>
+                <span class="active-filters" id="activeFilters"></span>
             </div>
-            <section class="products" id="products"></section>
+            <section class="products" id="products" aria-live="polite"></section>
         </main>
     </div>
 
-    <a href="orders.html" class="orders-btn" id="ordersBtn">📦 <span class="btn-text">Заказы</span></a>
-    <a href="cart.html" class="cart-btn" id="cartBtn">🛒 <span class="btn-text">Корзина</span> <span id="cartCount">0</span></a>
-    <div class="toast-container" id="toastContainer"></div>
+    <a href="orders.html" class="orders-btn" id="ordersBtn">Заказы</a>
+    <a href="cart.html" class="cart-btn" id="cartBtn" aria-label="Корзина">
+        <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
+        <span class="btn-text">Корзина</span> <span id="cartCount">0</span>
+    </a>
+    <div class="toast-container" id="toastContainer" aria-live="polite"></div>
 
     <!-- Плавающая панель сравнения -->
     <div class="compare-bar" id="compareBar" style="display: none;">
@@ -106,11 +172,11 @@
     </div>
 
     <!-- Модальное окно сравнения -->
-    <div class="modal-overlay" id="compareModal" style="display: none;">
+    <div class="modal-overlay" id="compareModal" style="display: none;" role="dialog" aria-modal="true" aria-label="Сравнение смартфонов">
         <div class="modal-content compare-modal-content">
             <div class="modal-header">
-                <h3>⚖️ Сравнение смартфонов</h3>
-                <button class="modal-close" onclick="closeCompareModal()">&times;</button>
+                <h3>Сравнение смартфонов</h3>
+                <button class="modal-close" onclick="closeCompareModal()" aria-label="Закрыть">&times;</button>
             </div>
             <div class="compare-table-wrapper" id="compareTableContainer"></div>
         </div>
@@ -118,15 +184,15 @@
 
     <footer id="footer">
         <div class="footer-container">
-            <div class="footer-section" id="footer-about">
+            <div class="footer-section" id="footer-about" data-reveal>
                 <h3>EzShop</h3>
                 <p>Мы — магазин электроники, специализирующийся на качественных смартфонах. Наша цель — предоставить клиентам лучшие цены и удобный сервис покупки с гарантией.</p>
             </div>
-            <div class="footer-section" id="footer-contacts">
+            <div class="footer-section" id="footer-contacts" data-reveal style="--i:1">
                 <h3>Контакты</h3>
-                <p>📍 г. Бишкек, ул. Киевская 10</p>
-                <p>📞 +996 (777) 12-34-56</p>
-                <p>✉️ support@ezshop.kg</p>
+                <p>г. Бишкек, ул. Киевская 10</p>
+                <p>+996 (777) 12-34-56</p>
+                <p>support@ezshop.kg</p>
             </div>
         </div>
         <div class="footer-bottom">
@@ -137,12 +203,15 @@
     <!-- Скрипты модульной архитектуры -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/config.js"></script>
+    <script src="js/icons.js"></script>
     <script src="js/products-data.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/cart.js"></script>
     <script src="js/favorites.js"></script>
     <script src="js/compare.js"></script>
+    <script src="js/product-card.js"></script>
     <script src="js/catalog.js"></script>
+    <script src="js/ui.js"></script>
     <script src="js/main.js"></script>
 </body>
 

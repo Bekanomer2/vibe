@@ -129,38 +129,45 @@ function renderCart() {
     let total = 0;
 
     if (cart.length === 0) {
-        itemsEl.innerHTML = '<p style="text-align:center; color: var(--muted); padding: 40px;">Ваша корзина пуста</p>';
-        totalEl.innerHTML = 'Итого: 0 сом';
+        itemsEl.innerHTML = `
+            <div class="cart-empty">
+                <div class="empty-ico">${ico('cart')}</div>
+                <h3>Ваша корзина пуста</h3>
+                <p>Добавьте смартфоны из каталога — они появятся здесь.</p>
+                <a href="index.html" class="btn btn-primary">Перейти в каталог</a>
+            </div>`;
+        totalEl.innerHTML = '<span>Итого</span><b>0 сом</b>';
         const checkoutBtn = document.getElementById('checkout');
         if (checkoutBtn) checkoutBtn.style.display = 'none';
         return;
     }
 
     const checkoutBtn = document.getElementById('checkout');
-    if (checkoutBtn) checkoutBtn.style.display = 'inline-block';
+    if (checkoutBtn) checkoutBtn.style.display = 'inline-flex';
 
     cart.forEach(item => {
         total += item.price * item.qty;
         const row = document.createElement('div');
         row.className = 'cart-item';
+        row.style.setProperty('--i', Math.min(cart.indexOf(item), 8));
         row.innerHTML = `
-            <img src="${item.img}" style="width:60px; height:60px; object-fit:cover; border-radius:8px;">
-            <div style="flex:1;">
-                <h4 style="margin:0;">${item.name}</h4>
-                <small style="color:var(--muted);">${item.price.toLocaleString()} сом</small>
+            <img class="cart-thumb" src="${esc(item.img)}" alt="${esc(item.name)}">
+            <div class="cart-item-info">
+                <h4>${esc(item.name)}</h4>
+                <small>${item.price.toLocaleString()} сом</small>
             </div>
             <div class="cart-qty-ctrl">
-                <button onclick="updateQty(${item.id}, -1)">-</button>
+                <button type="button" onclick="updateQty(${item.id}, -1)" aria-label="Уменьшить количество">−</button>
                 <span>${item.qty}</span>
-                <button onclick="updateQty(${item.id}, 1)">+</button>
+                <button type="button" onclick="updateQty(${item.id}, 1)" aria-label="Увеличить количество">+</button>
             </div>
-            <div style="font-weight:700;">${(item.price * item.qty).toLocaleString()} сом</div>
-            <button onclick="removeFromCart(${item.id})" class="btn-remove-item">✕</button>
+            <div class="cart-line-total">${(item.price * item.qty).toLocaleString()} сом</div>
+            <button type="button" onclick="removeFromCart(${item.id})" class="btn-remove-item" aria-label="Удалить из корзины" title="Удалить">${ico('trash')}</button>
         `;
         itemsEl.appendChild(row);
     });
 
-    totalEl.innerHTML = `Итого: <span style="color: var(--accent); font-weight: 800;">${total.toLocaleString()} сом</span>`;
+    totalEl.innerHTML = `<span>Итого</span><b>${total.toLocaleString()} сом</b>`;
 }
 
 function updateQty(id, delta) {

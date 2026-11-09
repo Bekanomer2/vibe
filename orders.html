@@ -4,36 +4,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#070b1a">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Manrope:wght@500;600;700;800&display=swap">
+    <script src="js/theme.js"></script>
     <title>Мои заказы — EzShop</title>
     <link rel="stylesheet" href="style.css">
 </head>
 
 <body class="auth-loading">
     <div class="loader-overlay" id="pageLoader">
-        <img src="img/logo.png" alt="Loading..." class="loader-logo">
+        <img src="img/logo.png" alt="Загрузка" class="loader-logo">
     </div>
 
-    <header>
-        <a href="index.html" class="logo">
-            <img src="img/logo.png" alt="EzShop Logo">
-        </a>
-        <nav id="nav">
-            <a href="index.html">🛍️ Каталог</a>
-            <a href="javascript:void(0)" onclick="openFavoritesModal()">❤️ Избранное (<span class="nav-fav-count">0</span>)</a>
-            <a href="cart.html">🛒 Корзина</a>
-            <a href="admin.html" class="admin-only-nav">⚙️ Админка</a>
-            <div class="user-panel">
-                <span id="usernameDisplay"></span>
-                <button onclick="logout()">Выйти</button>
-            </div>
-        </nav>
-        <div class="burger" id="burger"><span></span><span></span><span></span></div>
+    <header class="site-header">
+        <div class="header-inner">
+            <a href="index.html" class="logo" aria-label="EzShop — на главную">
+                <img src="img/logo.png" alt="EzShop">
+            </a>
+            <nav id="nav" class="main-nav" aria-label="Главное меню">
+            <a href="index.html" data-icon="grid">Каталог</a>
+            <a href="javascript:void(0)" onclick="openFavoritesModal()" data-icon="heart">Избранное <span class="nav-count nav-fav-count">0</span></a>
+            <a href="cart.html" data-icon="cart">Корзина</a>
+            <a href="admin.html" class="admin-only-nav" data-icon="shield">Админка</a>
+                <div class="user-panel">
+                    <span id="usernameDisplay"></span>
+                    <button type="button" onclick="logout()">Выйти</button>
+                </div>
+            </nav>
+            <div class="burger" id="burger"><span></span><span></span><span></span></div>
+        </div>
     </header>
 
     <div class="container orders-container">
-        <div class="orders-page-header">
-            <a href="index.html" class="back-link">← Вернуться в магазин</a>
-            <h1>📦 История заказов</h1>
+        <div class="orders-page-header" data-reveal>
+            <a href="index.html" class="back-link"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 19-7-7 7-7M19 12H5"/></svg> Вернуться в магазин</a>
+            <h1>История заказов</h1>
             <p class="orders-subtitle">Отслеживайте статусы ваших покупок в режиме реального времени</p>
         </div>
 
@@ -42,17 +49,19 @@
         </div>
     </div>
 
-    <a href="cart.html" class="cart-btn" id="cartBtn">🛒 <span class="btn-text">Корзина</span> <span id="cartCount">0</span></a>
+    <a href="cart.html" class="cart-btn" id="cartBtn" aria-label="Корзина"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg> <span class="btn-text">Корзина</span> <span id="cartCount">0</span></a>
     <div class="toast-container" id="toastContainer"></div>
 
     <!-- Модульные скрипты -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/config.js"></script>
+    <script src="js/icons.js"></script>
     <script src="js/products-data.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/favorites.js"></script>
     <script src="js/cart.js"></script>
     <script src="js/orders.js"></script>
+    <script src="js/ui.js"></script>
     <script src="js/main.js"></script>
 </body>
 

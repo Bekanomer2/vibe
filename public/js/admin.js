@@ -44,6 +44,10 @@ function updateAdminStats() {
     const brandCountEl = document.getElementById('statBrandCount');
 
     if (totalCountEl) totalCountEl.textContent = productsData.length;
+    const inEl = document.getElementById('statInStock');
+    const outEl = document.getElementById('statOutStock');
+    if (inEl) inEl.textContent = productsData.filter(p => p.inStock !== false).length;
+    if (outEl) outEl.textContent = productsData.filter(p => p.inStock === false).length;
     if (brandCountEl) brandCountEl.textContent = brandsData.length;
 }
 
@@ -68,7 +72,13 @@ function renderAdminProductsTable(filterQuery = '') {
     tbody.innerHTML = '';
 
     const q = filterQuery.toLowerCase();
-    const list = productsData.filter(p => p.name.toLowerCase().includes(q) || p.brand.toLowerCase().includes(q));
+    const stockMode = window.__adminStock || 'all';
+    const list = productsData.filter(p => {
+        const matches = p.name.toLowerCase().includes(q) || p.brand.toLowerCase().includes(q);
+        const inStock = p.inStock !== false;
+        const stockOk = stockMode === 'all' || (stockMode === 'in' ? inStock : !inStock);
+        return matches && stockOk;
+    });
 
     if (list.length === 0) {
         tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--muted); padding: 30px;">Смартфоны не найдены</td></tr>';
@@ -79,22 +89,22 @@ function renderAdminProductsTable(filterQuery = '') {
         const inStock = p.inStock !== false;
         const tr = document.createElement('tr');
         tr.innerHTML = `
-            <td><img src="${p.img}" class="admin-table-thumb" alt="${p.name}" onerror="this.src='img/logo.png'"></td>
+            <td><img src="${esc(p.img)}" class="admin-table-thumb" alt="${esc(p.name)}" onerror="this.src='img/logo.png'"></td>
             <td>
-                <strong>${p.name}</strong><br>
-                <small style="color: var(--accent);">${p.brand}</small>
+                <strong>${esc(p.name)}</strong><br>
+                <small class="admin-brand-tag">${esc(p.brand)}</small>
             </td>
             <td>${p.ram} / ${p.storage} ГБ</td>
             <td><b>${p.price.toLocaleString()} сом</b></td>
             <td>
-                <button type="button" onclick="toggleProductStock(${p.id})" title="Нажмите, чтобы переключить наличие" style="background: ${inStock ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)'}; color: ${inStock ? 'var(--success)' : '#ef4444'}; border: 1px solid ${inStock ? 'rgba(16, 185, 129, 0.35)' : 'rgba(239, 68, 68, 0.35)'}; padding: 5px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; cursor: pointer; white-space: nowrap;">
+                <button type="button" class="stock-chip ${inStock ? 'in' : 'out'}" onclick="toggleProductStock(${p.id})" title="Нажмите, чтобы переключить наличие">
                     ${inStock ? '● В наличии' : '● Нет в наличии'}
                 </button>
             </td>
             <td>
                 <div class="admin-table-actions">
-                    <button class="btn-action-edit" onclick="editProductInAdmin(${p.id})">✏️ Редакт.</button>
-                    <button class="btn-action-delete" onclick="deleteProductInAdmin(${p.id})">🗑️</button>
+                    <button type="button" class="btn-action-edit" onclick="editProductInAdmin(${p.id})">${ico('edit')} Редакт.</button>
+                    <button type="button" class="btn-action-delete" onclick="deleteProductInAdmin(${p.id})" aria-label="Удалить ${esc(p.name)}" title="Удалить">${ico('trash')}</button>
                 </div>
             </td>
         `;
@@ -242,12 +252,11 @@ function editProductInAdmin(id) {
     document.getElementById('prodImg').value = p.img;
     document.getElementById('prodDescription').value = p.description || '';
 
-    document.getElementById('formTitle').textContent = `✏️ Редактирование: ${p.name}`;
+    document.getElementById('formTitle').textContent = `Редактирование: ${p.name}`;
     document.getElementById('saveProductBtn').textContent = 'Сохранить изменения';
     document.getElementById('cancelEditBtn').style.display = 'inline-block';
 
     updateLivePreview();
-    window.scrollTo({ top: 100, behavior: 'smooth' });
 }
 
 function cancelEditing() {
@@ -261,7 +270,7 @@ function resetForm() {
     if (document.getElementById('prodInStock')) {
         document.getElementById('prodInStock').value = 'true';
     }
-    document.getElementById('formTitle').textContent = '➕ Добавить новый телефон';
+    document.getElementById('formTitle').textContent = 'Добавить новый телефон';
     document.getElementById('saveProductBtn').textContent = 'Сохранить телефон';
     document.getElementById('cancelEditBtn').style.display = 'none';
     populateBrandSelect();
@@ -310,13 +319,13 @@ function renderAdminBrandsList() {
         card.innerHTML = `
             <div class="brand-card-left">
                 <div class="brand-card-info">
-                    <h4>${b.name} <span class="brand-count-badge">${count} шт.</span></h4>
-                    <span>${b.country || 'Международный бренд'}</span>
+                    <h4>${esc(b.name)} <span class="brand-count-badge">${count} шт.</span></h4>
+                    <span>${esc(b.country || 'Международный бренд')}</span>
                 </div>
             </div>
             <div class="brand-actions">
-                <button class="btn-action-edit" onclick="editBrandInAdmin(${b.id})" title="Редактировать">✏️</button>
-                <button class="btn-action-delete" onclick="deleteBrandInAdmin(${b.id})" title="Удалить">🗑️</button>
+                <button type="button" class="btn-action-edit" onclick="editBrandInAdmin(${b.id})" title="Редактировать" aria-label="Редактировать">${ico('edit')}</button>
+                <button type="button" class="btn-action-delete" onclick="deleteBrandInAdmin(${b.id})" title="Удалить" aria-label="Удалить">${ico('trash')}</button>
             </div>
         `;
         container.appendChild(card);
@@ -390,11 +399,10 @@ function editBrandInAdmin(id) {
     document.getElementById('brandName').value = b.name;
     document.getElementById('brandCountry').value = b.country;
 
-    document.getElementById('brandFormTitle').textContent = `✏️ Редактирование: ${b.name}`;
+    document.getElementById('brandFormTitle').textContent = `Редактирование: ${b.name}`;
     document.getElementById('saveBrandBtn').textContent = 'Сохранить изменения';
     document.getElementById('cancelBrandEditBtn').style.display = 'inline-block';
 
-    window.scrollTo({ top: 150, behavior: 'smooth' });
 }
 
 function cancelBrandEditing() {
@@ -405,7 +413,7 @@ function resetBrandForm() {
     const form = document.getElementById('brandForm');
     if (form) form.reset();
     document.getElementById('editBrandId').value = '';
-    document.getElementById('brandFormTitle').textContent = '➕ Добавить новый бренд';
+    document.getElementById('brandFormTitle').textContent = 'Добавить новый бренд';
     document.getElementById('saveBrandBtn').textContent = 'Сохранить бренд';
     document.getElementById('cancelBrandEditBtn').style.display = 'none';
 }

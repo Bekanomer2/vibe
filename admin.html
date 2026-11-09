@@ -4,70 +4,129 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Панель управления — EzShop Admin</title>
+    <meta name="theme-color" content="#070b1a">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Manrope:wght@500;600;700;800&display=swap">
+    <script src="js/theme.js"></script>
+    <title>Админ-панель — EzShop</title>
     <link rel="stylesheet" href="style.css">
 </head>
 
-<body class="auth-loading admin-body">
+<body class="auth-loading">
     <div class="loader-overlay" id="pageLoader">
-        <img src="img/logo.png" alt="Loading..." class="loader-logo">
+        <img src="img/logo.png" alt="Загрузка" class="loader-logo">
     </div>
 
-    <header class="admin-header">
-        <a href="index.html" class="logo">
-            <img src="img/logo.png" alt="EzShop Logo">
-        </a>
-        <div class="admin-header-title">
-            <span class="admin-badge">Admin</span>
-            <h2>Управление магазином</h2>
-        </div>
-        <nav id="nav">
-            <a href="index.html">🛍️ В магазин</a>
-            <a href="admin-orders.html">📦 Все заказы</a>
-            <div class="user-panel">
-                <span id="usernameDisplay">Администратор</span>
-                <button onclick="logout()" class="admin-logout-btn">Выход</button>
+    <header class="site-header admin-header">
+        <div class="header-inner">
+            <a href="index.html" class="logo" aria-label="EzShop — в магазин">
+                <img src="img/logo.png" alt="EzShop">
+            </a>
+            <div class="admin-header-title">
+                <span class="admin-badge">Admin</span>
+                <h2>Управление магазином</h2>
             </div>
-        </nav>
-        <div class="burger" id="burger"><span></span><span></span><span></span></div>
+            <nav id="nav" class="main-nav" aria-label="Меню администратора">
+                <a href="admin.html" data-icon="phone">Каталог и бренды</a>
+                <a href="admin-orders.html" data-icon="package">Все заказы</a>
+                <a href="index.html" data-icon="store">В магазин</a>
+                <div class="user-panel">
+                    <span id="usernameDisplay">Администратор</span>
+                    <button type="button" onclick="logout()" class="admin-logout-btn">Выход</button>
+                </div>
+            </nav>
+            <div class="burger" id="burger"><span></span><span></span><span></span></div>
+        </div>
     </header>
 
     <div class="admin-container">
-        <!-- Статистика каталога (только нужные плашки) -->
+        <!-- Статистика каталога -->
         <div class="admin-stats-grid">
             <div class="stat-card">
-                <div class="stat-icon">📱</div>
+                <div class="stat-icon" data-icon="phone"></div>
                 <div class="stat-info">
                     <span class="stat-label">Всего смартфонов</span>
                     <h3 id="statTotalCount">0</h3>
                 </div>
             </div>
             <div class="stat-card">
-                <div class="stat-icon">🏷️</div>
+                <div class="stat-icon" data-icon="tag"></div>
                 <div class="stat-info">
                     <span class="stat-label">Брендов в каталоге</span>
                     <h3 id="statBrandCount">0</h3>
                 </div>
             </div>
+            <div class="stat-card">
+                <div class="stat-icon ok" data-icon="check-circle"></div>
+                <div class="stat-info">
+                    <span class="stat-label">В наличии</span>
+                    <h3 id="statInStock">0</h3>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon bad" data-icon="x-circle"></div>
+                <div class="stat-info">
+                    <span class="stat-label">Нет в наличии</span>
+                    <h3 id="statOutStock">0</h3>
+                </div>
+            </div>
         </div>
 
-        <!-- Вкладки Админки -->
-        <div class="admin-tabs">
-            <button class="admin-tab-btn active" id="tabBtnProducts" onclick="switchAdminTab('products')">📱 Телефоны (CRUD)</button>
-            <button class="admin-tab-btn" id="tabBtnBrands" onclick="switchAdminTab('brands')">🏷️ Бренды (CRUD)</button>
+        <!-- Вкладки (сегментированный переключатель) -->
+        <div class="admin-tabs" role="tablist">
+            <button type="button" class="admin-tab-btn active" id="tabBtnProducts" role="tab" onclick="switchAdminTab('products')"><span data-icon="phone"></span>Телефоны</button>
+            <button type="button" class="admin-tab-btn" id="tabBtnBrands" role="tab" onclick="switchAdminTab('brands')"><span data-icon="tag"></span>Бренды</button>
         </div>
 
         <!-- ==========================================
-             ВКЛАДКА 1: Управление Телефонами (CRUD)
+             ВКЛАДКА 1: Телефоны
              ========================================== -->
         <div class="admin-tab-content active" id="tabContentProducts">
             <div class="admin-layout">
-                <!-- Форма добавления / редактирования телефона -->
-                <div class="admin-form-panel">
+                <!-- Таблица товаров -->
+                <div class="admin-table-panel">
                     <div class="panel-header">
-                        <h3 id="formTitle">➕ Добавить новый телефон</h3>
-                        <button type="button" id="cancelEditBtn" class="btn-text-small" style="display: none;" onclick="cancelEditing()">Отмена</button>
+                        <h3><span data-icon="list"></span>Список телефонов</h3>
+                        <div class="table-actions-header">
+                            <div class="admin-search">
+                                <span data-icon="search"></span>
+                                <input type="text" id="adminSearchInput" class="admin-input-small" placeholder="Поиск модели или бренда" aria-label="Поиск" oninput="filterAdminProducts()">
+                            </div>
+                            <button type="button" class="admin-btn admin-btn-primary" onclick="openProductDrawerNew()"><span data-icon="plus"></span>Добавить телефон</button>
+                        </div>
                     </div>
+
+                    <div class="admin-filter-chips" id="adminStockChips" role="group" aria-label="Фильтр по наличию">
+                        <button type="button" class="chip is-on" data-stock="all" onclick="setAdminStockFilter('all')">Все</button>
+                        <button type="button" class="chip" data-stock="in" onclick="setAdminStockFilter('in')">В наличии</button>
+                        <button type="button" class="chip" data-stock="out" onclick="setAdminStockFilter('out')">Нет в наличии</button>
+                    </div>
+
+                    <div class="admin-table-wrapper">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>Фото</th>
+                                    <th>Название / Бренд</th>
+                                    <th>Память</th>
+                                    <th>Цена</th>
+                                    <th>Наличие</th>
+                                    <th>Действия</th>
+                                </tr>
+                            </thead>
+                            <tbody id="adminProductsTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Форма добавления / редактирования (выезжает справа) -->
+                <aside class="admin-form-panel" id="productDrawer" aria-label="Форма телефона">
+                    <div class="panel-header">
+                        <h3 id="formTitle">Добавить новый телефон</h3>
+                        <button type="button" class="drawer-close" onclick="closeAdminDrawer()" aria-label="Закрыть">&times;</button>
+                    </div>
+                    <button type="button" id="cancelEditBtn" class="btn-text-small" style="display: none;" onclick="cancelEditing()">Отменить редактирование</button>
 
                     <form id="productForm" onsubmit="handleProductFormSubmit(event)">
                         <input type="hidden" id="editProductId" value="">
@@ -97,8 +156,8 @@
                             <div class="form-group flex-1">
                                 <label for="prodInStock">Статус наличия *</label>
                                 <select id="prodInStock" class="admin-input" onchange="updateLivePreview()">
-                                    <option value="true" selected>✅ В наличии</option>
-                                    <option value="false">❌ Нет в наличии</option>
+                                    <option value="true" selected>В наличии</option>
+                                    <option value="false">Нет в наличии</option>
                                 </select>
                             </div>
                         </div>
@@ -143,7 +202,7 @@
                             <div class="image-input-group">
                                 <input type="text" id="prodImg" class="admin-input" placeholder="img/iphone 15 pro max.jpg или прямая ссылка https://" required oninput="updateLivePreview()">
                                 <select id="presetImages" class="admin-input select-preset" onchange="choosePresetImage(this.value)">
-                                    <option value="">🖼️ Выбрать из галереи</option>
+                                    <option value="">Выбрать из галереи</option>
                                     <option value="img/iPhone 15 pro max.jpg">iPhone 15 Pro Max</option>
                                     <option value="img/iPhone 14 Pro.jpg">iPhone 14 Pro</option>
                                     <option value="img/iphone 13.jpg">iPhone 13</option>
@@ -174,7 +233,7 @@
 
                         <!-- Предпросмотр карточки -->
                         <div class="preview-box">
-                            <span class="preview-label">Предпросмотр карточки в каталоге:</span>
+                            <span class="preview-label">Предпросмотр карточки в каталоге</span>
                             <div class="card preview-card" id="cardPreview">
                                 <img id="prevImg" src="img/iPhone 15 pro max.jpg" alt="Preview">
                                 <h3 id="prevName">Название модели</h3>
@@ -190,47 +249,34 @@
                             <button type="button" class="admin-btn admin-btn-secondary" onclick="resetForm()">Очистить форму</button>
                         </div>
                     </form>
-                </div>
-
-                <!-- Таблица товаров в каталоге -->
-                <div class="admin-table-panel">
-                    <div class="panel-header">
-                        <h3>📋 Список телефонов в каталоге</h3>
-                        <div class="table-actions-header">
-                            <input type="text" id="adminSearchInput" class="admin-input-small" placeholder="🔍 Поиск модели..." oninput="filterAdminProducts()">
-                        </div>
-                    </div>
-
-                    <div class="admin-table-wrapper">
-                        <table class="admin-table">
-                            <thead>
-                                <tr>
-                                    <th>Фото</th>
-                                    <th>Название / Бренд</th>
-                                    <th>Память</th>
-                                    <th>Цена</th>
-                                    <th>Наличие</th>
-                                    <th>Действия</th>
-                                </tr>
-                            </thead>
-                            <tbody id="adminProductsTableBody"></tbody>
-                        </table>
-                    </div>
-                </div>
+                </aside>
             </div>
         </div>
 
         <!-- ==========================================
-             ВКЛАДКА 2: Управление Брендами (CRUD)
+             ВКЛАДКА 2: Бренды
              ========================================== -->
         <div class="admin-tab-content" id="tabContentBrands">
             <div class="admin-layout">
-                <!-- Форма добавления / редактирования бренда -->
-                <div class="admin-form-panel">
+                <div class="admin-table-panel">
                     <div class="panel-header">
-                        <h3 id="brandFormTitle">➕ Добавить новый бренд</h3>
-                        <button type="button" id="cancelBrandEditBtn" class="btn-text-small" style="display: none;" onclick="cancelBrandEditing()">Отмена</button>
+                        <h3><span data-icon="tag"></span>Все бренды в магазине <small class="panel-count">Всего: <b id="brandsListCount">0</b></small></h3>
+                        <div class="table-actions-header">
+                            <button type="button" class="admin-btn admin-btn-primary" onclick="openBrandDrawerNew()"><span data-icon="plus"></span>Добавить бренд</button>
+                        </div>
                     </div>
+
+                    <div class="brands-grid" id="adminBrandsGrid">
+                        <!-- Заполняется динамически -->
+                    </div>
+                </div>
+
+                <aside class="admin-form-panel" id="brandDrawer" aria-label="Форма бренда">
+                    <div class="panel-header">
+                        <h3 id="brandFormTitle">Добавить новый бренд</h3>
+                        <button type="button" class="drawer-close" onclick="closeAdminDrawer()" aria-label="Закрыть">&times;</button>
+                    </div>
+                    <button type="button" id="cancelBrandEditBtn" class="btn-text-small" style="display: none;" onclick="cancelBrandEditing()">Отменить редактирование</button>
 
                     <form id="brandForm" onsubmit="handleBrandFormSubmit(event)">
                         <input type="hidden" id="editBrandId" value="">
@@ -250,32 +296,24 @@
                             <button type="button" class="admin-btn admin-btn-secondary" onclick="resetBrandForm()">Очистить форму</button>
                         </div>
                     </form>
-                </div>
-
-                <!-- Список брендов -->
-                <div class="admin-table-panel">
-                    <div class="panel-header">
-                        <h3>🏷️ Все бренды в магазине</h3>
-                        <span style="font-size: 13px; color: var(--muted);">Всего: <b id="brandsListCount">0</b></span>
-                    </div>
-
-                    <div class="brands-grid" id="adminBrandsGrid">
-                        <!-- Заполняется динамически -->
-                    </div>
-                </div>
+                </aside>
             </div>
         </div>
     </div>
 
-    <div class="toast-container" id="toastContainer"></div>
+    <div class="admin-scrim" id="adminScrim" onclick="closeAdminDrawer()"></div>
+    <div class="toast-container" id="toastContainer" aria-live="polite"></div>
 
     <!-- Модульные скрипты -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/config.js"></script>
+    <script src="js/icons.js"></script>
     <script src="js/products-data.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/cart.js"></script>
     <script src="js/admin.js"></script>
+    <script src="js/admin-ui.js"></script>
+    <script src="js/ui.js"></script>
     <script src="js/main.js"></script>
 </body>
 
